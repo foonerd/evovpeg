@@ -34,6 +34,18 @@ target_cflags() {
   esac
 }
 
+target_configure_flags() {
+  case "$1" in
+    armv7|armv8)
+      printf '%s\n' \
+        --enable-v4l2-m2m \
+        --enable-decoder=h264_v4l2m2m,hevc_v4l2m2m,mpeg2_v4l2m2m,mpeg4_v4l2m2m,vp8_v4l2m2m,vp9_v4l2m2m
+      ;;
+    x64) return 0 ;;
+    *) return 1 ;;
+  esac
+}
+
 # What FFmpeg's configure is told with --arch, and what the libraries' configure scripts
 # are told with --build and --host. Told, not asked: the kernel's answer depends on where
 # the build runs (a 32-bit container on a 64-bit ARM machine says "aarch64").

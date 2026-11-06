@@ -1,13 +1,14 @@
 #!/bin/bash
-# Decode and probe every video sample, including the pinned VVC conformance stream.
+# Decode and probe every video sample, including the project-generated VVC stream.
 #
-#   smoke.sh DECODER PROBER CLIP_DIR VVC_SAMPLE WORKDIR
+#   smoke.sh DECODER PROBER CLIP_DIR VVC_SAMPLE WORKDIR TARGET
 set -euo pipefail
 bin=$1
 probe=$2
 clips=$3
 vvc_sample=$4
 work=$5
+target=$6
 rm -rf "$work" && mkdir -p "$work"
 
 run() { timeout 120 "$bin" -hide_banner -loglevel error -nostdin "$@"; }
@@ -75,8 +76,24 @@ IFS=, read -r vvc_codec vvc_width vvc_height <<< "$vvc_metadata"
 [[ "$vvc_codec" == vvc && "$vvc_width" =~ ^[0-9]+$ && "$vvc_height" =~ ^[0-9]+$ ]] \
   || { echo "WRONG VVC probe: $vvc_metadata" >&2; exit 1; }
 run -i "$vvc_sample" -an -sn -frames:v 1 -pix_fmt yuv420p -f rawvideo - > "$work/vvc.yuv"
-[[ -s "$work/vvc.yuv" ]] || { echo "WRONG VVC decoder produced no frame" >&2; exit 1; }
+[[ "$(stat -c %s "$work/vvc.yuv")" -eq 6144 ]] \
+  || { echo "WRONG VVC decoder frame size" >&2; exit 1; }
+if ! head -c 4096 "$work/vvc.yuv" | od -An -v -tu1 \
+  | awk '{ for (i = 1; i <= NF; i++) { if ($i != 128) wrong = 1; count++ } } END { exit !(count == 4096 && !wrong) }'; then
+  echo "WRONG VVC decoded luma differs from the synthetic gray frame" >&2
+  exit 1
+fi
 echo "  ok    vvc: probed $vvc_width x $vvc_height and decoded a frame"
+
+m2m_count=$("$bin" -hide_banner -decoders | grep -c 'v4l2m2m' || true)
+case "$target" in
+  armv7|armv8) expected_m2m=6 ;;
+  x64) expected_m2m=0 ;;
+  *) echo "error: unknown target '$target'" >&2; exit 2 ;;
+esac
+[[ "$m2m_count" -eq "$expected_m2m" ]] \
+  || { echo "WRONG $target V4L2 M2M decoder count: expected $expected_m2m, got $m2m_count" >&2; exit 1; }
+echo "  ok    $target V4L2 M2M decoders: $m2m_count"
 
 if run -i http://127.0.0.1:9/unreachable -frames:v 1 -f null - 2> "$work/network.txt"; then
   echo "WRONG network input was not refused" >&2

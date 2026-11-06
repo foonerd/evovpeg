@@ -5,6 +5,7 @@
 # image at the digest its lock names.
 set -euo pipefail
 here=$(cd "$(dirname "$0")" && pwd)
+. "$here/../../scripts/targets.sh"
 
 prefix="$WORK/prefix"
 rm -rf "$WORK/src" "$prefix" "$WORK/ffmpeg-install"
@@ -43,7 +44,10 @@ find "$prefix/lib" -name '*.so*' -delete
 echo "[+] ffmpeg $(version_of ffmpeg)"
 dir=$(unpack ffmpeg)
 patch -d "$dir" -p1 < "$here/0001-fix-decoder-build-warnings.patch"
-mapfile -t flags < <(grep -vE '^[[:space:]]*(#|$)' "$here/configure.txt")
+mapfile -t flags < <(
+  grep -vE '^[[:space:]]*(#|$)' "$here/configure.txt"
+  target_configure_flags "$TARGET"
+)
 (
   cd "$dir"
   ./configure --prefix="$WORK/ffmpeg-install" --arch="$TARGET_ARCH" \

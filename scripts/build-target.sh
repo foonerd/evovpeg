@@ -26,7 +26,7 @@ bash /src/components/ffmpeg/build.sh
 
 echo "=== $TARGET: checking what was built ==="
 bash /src/scripts/check-elf.sh "$TARGET" "$OUT/bin"
-bash /src/scripts/verify-set.sh "$OUT/bin/evovpeg" /src "$OUT/bin/evovprobe"
+bash /src/scripts/verify-set.sh "$OUT/bin/evovpeg" /src "$OUT/bin/evovprobe" "$TARGET"
 bash /src/scripts/smoke.sh "$OUT/bin/evovpeg" "$OUT/bin/evovprobe" \
-	/src/tests/clips "$SRC_CACHE/CodingToolsSets_A_2.bit" "$WORK/smoke"
+	/src/tests/clips /src/tests/clips/vvc-synthetic.266 "$WORK/smoke" "$TARGET"
 echo "[OK] $TARGET built: bin/evovpeg $(stat -c %s "$OUT/bin/evovpeg") bytes; bin/evovprobe $(stat -c %s "$OUT/bin/evovprobe") bytes"

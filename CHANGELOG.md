@@ -2,6 +2,14 @@
 
 All notable changes to evovpeg. Versions follow Semantic Versioning and move when the source or build recipe changes.
 
+## [0.2.0] - 2026-11-06
+
+### Added
+
+- Upstream FFmpeg V4L2 M2M decoders for H.264, HEVC, MPEG-2, MPEG-4 Part 2, VP8 and VP9 on armv7 and armv8. Existing software decoders remain enabled; x64 remains software-only.
+- ARM smoke gates that verify all six M2M decoders are registered without requiring hardware access.
+- Project-generated VVC smoke fixture with exact decoded frame-size and luma checks, removing the external FATE sample dependency.
+
 ## [0.1.1] - 2026-11-06
 
 ### Added

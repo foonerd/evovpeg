@@ -10,6 +10,7 @@ set -euo pipefail
 bin=$1
 root=${2:-$(cd "$(dirname "$0")/.." && pwd)}
 probe=${3:-}
+target=${4:-x64}
 expected="$root/components/ffmpeg/expected"
 [ -x "$bin" ] || { echo "verify-set: $bin is not an executable" >&2; exit 2; }
 [ -d "$expected" ] || { echo "verify-set: no expected lists at $expected" >&2; exit 2; }
@@ -34,11 +35,15 @@ names() {
 
 fail=0
 for list in encoders decoders muxers demuxers protocols filters bsfs hwaccels; do
-  [ -f "$expected/$list.txt" ] || { echo "verify-set: no $expected/$list.txt" >&2; exit 2; }
-  if diff -u "$expected/$list.txt" <(names "$list") > /tmp/verify-set.diff; then
-    echo "  ok    $list: $(grep -c . "$expected/$list.txt") as expected"
+  expected_file="$expected/$list.txt"
+  if [[ "$list" == decoders && ( "$target" == armv7 || "$target" == armv8 ) ]]; then
+    expected_file="$expected/decoders-arm.txt"
+  fi
+  [ -f "$expected_file" ] || { echo "verify-set: no $expected_file" >&2; exit 2; }
+  if diff -u "$expected_file" <(names "$list") > /tmp/verify-set.diff; then
+    echo "  ok    $list: $(grep -c . "$expected_file") as expected"
   else
-    echo "  WRONG $list: the binary differs from $expected/$list.txt (- expected, + the binary):"
+    echo "  WRONG $list: the binary differs from $expected_file (- expected, + the binary):"
     grep -E '^[-+][^-+]' /tmp/verify-set.diff | sed 's/^/        /'
     fail=1
   fi
@@ -53,6 +58,13 @@ while IFS= read -r flag; do
     fail=1
   fi
 done < <(grep -vE '^[[:space:]]*(#|$)' "$root/components/ffmpeg/configure.txt")
+. "$root/scripts/targets.sh"
+while IFS= read -r flag; do
+  if ! grep -qF -- "$flag" <<< "$buildconf"; then
+    echo "  WRONG target build configuration: $flag is not in it"
+    fail=1
+  fi
+done < <(target_configure_flags "$target")
 for forbidden in --enable-gpl --enable-nonfree --enable-network --enable-avdevice; do
   if grep -qF -- "$forbidden" <<< "$buildconf"; then
     echo "  WRONG build configuration: $forbidden is in it"

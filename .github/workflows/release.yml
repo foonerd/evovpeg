@@ -75,7 +75,7 @@ jobs:
       - name: The x64 binary, as it arrived
         run: |
           chmod 755 out/x64/bin/evovpeg out/x64/bin/evovprobe
-          scripts/verify-set.sh out/x64/bin/evovpeg . out/x64/bin/evovprobe
+          scripts/verify-set.sh out/x64/bin/evovpeg . out/x64/bin/evovprobe x64
       # Every file of every build is checked against the digest its build.json recorded.
       - run: scripts/package.sh
       # Every archive carries MANIFEST and its signature; SHA256SUMS and its signature

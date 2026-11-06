@@ -15,7 +15,7 @@ FFmpeg is built with network protocols and device I/O disabled, and without GPL 
 
 The software decode profile includes H.264, H.265/HEVC, H.266/VVC, MPEG-2, MPEG-4 Part 2, VP8, VP9 and AV1 video, plus AAC, AAC-LATM, AC-3, E-AC-3, DTS, TrueHD, MLP, MP3, MP2, Opus, Vorbis, FLAC, ALAC, WMA v2 and PCM audio. AV1 uses the statically linked dav1d library. Audio decoding is offline and produces PCM; it does not add network protocols or replace MPD's playback path. Supported input containers and elementary streams are recorded in `components/ffmpeg/configure.txt` and checked against the built binary on every target.
 
-The v0.1.0 release was software video decode only; v0.1.1 adds software audio decode for calibration. ARM hardware paths remain a later release. x64 uses software decode; VAAPI is not included.
+ARM builds include upstream V4L2 M2M decoder registrations for H.264, HEVC, MPEG-2, MPEG-4 Part 2, VP8 and VP9 alongside the software decoders. These registrations require a compatible V4L2 M2M device and driver at runtime; the build does not claim hardware execution. x64 remains software-only. VAAPI and V4L2 request API decoders are not included.
 
 ## Use
 
@@ -60,7 +60,7 @@ scripts/check.sh       # shell, lock, expected-set and workflow checks
 ./build.sh x64         # one target
 ```
 
-Every target checks both ELF files for architecture and static linkage, compares FFmpeg's component lists against the expected sets, probes and decodes the video smoke clips (including a pinned VVC conformance stream), decodes AAC audio-bearing variants to mono 8 kHz float PCM and checks output duration, verifies seeking, refuses network input and requires zero compiler warnings.
+Every target checks both ELF files for architecture and static linkage, compares FFmpeg's component lists against the expected sets, probes and decodes the video smoke clips (including a project-generated VVC vector with exact frame-content checks), decodes AAC audio-bearing variants to mono 8 kHz float PCM and checks output duration, verifies seeking, refuses network input and requires zero compiler warnings.
 
 ## Licences
 
