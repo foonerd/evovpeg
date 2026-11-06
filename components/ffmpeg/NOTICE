@@ -1,8 +1,8 @@
-evovpeg: a static video decoder and stream prober for the evo framework
-(https://evoframework.org). It reads local video files and writes raw frames to stdout;
-its prober reports video stream properties. It has no network or device I/O. The recipe
-is public at https://github.com/foonerd/evovpeg; the build.json beside this file names
-the exact sources, digests and configure set.
+evovpeg: static video and audio decoders and a stream prober for the evo framework
+(https://evoframework.org). It reads local media and writes raw video frames or audio
+PCM to stdout; its prober reports stream properties. It has no network or device I/O.
+The recipe is public at https://github.com/foonerd/evovpeg; the build.json beside this
+file names the exact sources, digests and configure set.
 
 The binaries bin/evovpeg and bin/evovprobe statically link:
 

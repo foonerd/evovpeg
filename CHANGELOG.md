@@ -2,6 +2,14 @@
 
 All notable changes to evovpeg. Versions follow Semantic Versioning and move when the source or build recipe changes.
 
+## [0.1.1] - 2026-11-06
+
+### Added
+
+- Native FFmpeg audio decoders for Glass lip-sync calibration, outputting selected audio as mono 8 kHz float PCM while leaving audible playback to MPD.
+- AAC-bearing Matroska smoke fixtures paired with all six video codec samples; each target probes AAC and checks PCM output length and non-silent samples.
+- ASF demuxing for WMAv2 and raw f32le output support; network and device I/O remain disabled.
+
 ## [0.1.0] - 2026-11-06
 
 ### Added

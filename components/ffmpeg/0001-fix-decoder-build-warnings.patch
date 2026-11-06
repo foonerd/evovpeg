@@ -203,3 +203,27 @@
 @@ -183,1 +183,1 @@
 -    snprintf(name, sizeof(name), "av:%.7s:df%d", avctx->codec->name, idx);
 +    snprintf(name, sizeof(name), "av:%.3s:%08x", avctx->codec->name, (unsigned)idx);
+--- a/libavcodec/aacsbr_template.c
++++ b/libavcodec/aacsbr_template.c
+@@ -727,3 +727,10 @@
+-        for (i = 0; i < num_rel_trail; i++)
+-            ch_data->t_env[ch_data->bs_num_env - 1 - i] =
+-                ch_data->t_env[ch_data->bs_num_env - i] - 2 * get_bits(gb, 2) - 2;
++        for (i = 0; i < num_rel_trail; i++) {
++            unsigned int dst_idx = (unsigned int)ch_data->bs_num_env - 1 - i;
++            unsigned int src_idx = (unsigned int)ch_data->bs_num_env - i;
++            if (dst_idx >= FF_ARRAY_ELEMS(ch_data->t_env) ||
++                src_idx >= FF_ARRAY_ELEMS(ch_data->t_env)) {
++                av_log(ac->avctx, AV_LOG_ERROR, "Invalid SBR time border index\n");
++                return -1;
++            }
++            ch_data->t_env[dst_idx] = ch_data->t_env[src_idx] - 2 * get_bits(gb, 2) - 2;
++        }
+--- a/libavcodec/wmadec.c
++++ b/libavcodec/wmadec.c
+@@ -460,1 +460,4 @@
+-    av_assert2(channels <= MAX_CHANNELS);
++    if (channels < 1 || channels > MAX_CHANNELS) {
++        av_log(s->avctx, AV_LOG_ERROR, "Invalid WMA channel count: %d\n", channels);
++        return AVERROR_INVALIDDATA;
++    }

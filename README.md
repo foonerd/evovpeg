@@ -1,21 +1,21 @@
 # evovpeg
 
-`evovpeg` is the video decoder component of the evo framework. It is a small, purpose-built FFmpeg build for Glass: it probes local files and decodes their video stream to raw frames on standard output. The player's audio continues through its own audio path.
+`evovpeg` is the media decoder component of the evo framework. It is a small, purpose-built FFmpeg build for Glass: it probes local files, decodes video to raw frames, and can decode an audio track to raw PCM for Glass's lip-sync calibration. The sound the listener hears continues through MPD.
 
 Both programs are statically linked and have no dynamic loader or shared-library dependencies:
 
 | Program | Purpose |
 | --- | --- |
 | `bin/evovpeg` | Decode video to raw planar YUV 4:2:0 frames on stdout. |
-| `bin/evovprobe` | Report the first video stream's codec, dimensions and frame rate. |
+| `bin/evovprobe` | Report selected audio/video stream properties. |
 
 FFmpeg is built with network protocols and device I/O disabled, and without GPL or non-free components. Only the local `file` and `pipe` protocols are enabled. The build, package and release checks verify the enabled component set and reject ELF interpreters and dynamic dependencies.
 
 ## Supported Set
 
-The software decode profile includes H.264, H.265/HEVC, H.266/VVC, MPEG-2, MPEG-4 Part 2, VP8, VP9 and AV1. AV1 uses the statically linked dav1d library. Supported input containers and elementary streams are recorded in `components/ffmpeg/configure.txt` and checked against the built binary on every target.
+The software decode profile includes H.264, H.265/HEVC, H.266/VVC, MPEG-2, MPEG-4 Part 2, VP8, VP9 and AV1 video, plus AAC, AAC-LATM, AC-3, E-AC-3, DTS, TrueHD, MLP, MP3, MP2, Opus, Vorbis, FLAC, ALAC, WMA v2 and PCM audio. AV1 uses the statically linked dav1d library. Audio decoding is offline and produces PCM; it does not add network protocols or replace MPD's playback path. Supported input containers and elementary streams are recorded in `components/ffmpeg/configure.txt` and checked against the built binary on every target.
 
-The first release is software decode only. ARM hardware paths are a later release and are kept out of this build profile. x64 uses software decode; VAAPI is not included.
+The v0.1.0 release was software video decode only; v0.1.1 adds software audio decode for calibration. ARM hardware paths remain a later release. x64 uses software decode; VAAPI is not included.
 
 ## Use
 
@@ -35,6 +35,15 @@ evovpeg -nostdin -loglevel error -ss SECONDS -i FILE \\
 
 Each frame is `width * height * 3 / 2` bytes. Decoder errors end the output stream; the caller owns playback timing and presentation.
 
+Decode the media's audio track separately for analysis or synchronization:
+
+```sh
+evovpeg -nostdin -loglevel error -ss SECONDS -i FILE \
+  -vn -sn -ac 1 -ar 8000 -f f32le -
+```
+
+This writes mono 8 kHz float PCM to stdout. Glass drains the video and audio invocations independently; MPD remains responsible for audible playback.
+
 ## Archives
 
 Each version is released as one archive per Volumio architecture: `arm`, `armv7`, `armv8` and `x64`. The `arm` archive is the `armv7` build, following evopeg's existing architecture bundle. Archives are named `evovpeg-<version>-<arch>.tar.gz` and contain both programs, their license texts, `NOTICE`, `build.json`, this README and the MIT `LICENSE` for the recipe.
@@ -51,7 +60,7 @@ scripts/check.sh       # shell, lock, expected-set and workflow checks
 ./build.sh x64         # one target
 ```
 
-Every target checks both ELF files for architecture and static linkage, compares FFmpeg's component lists against the expected sets, probes and decodes the video smoke clips (including a pinned VVC conformance stream), verifies seeking, refuses network input and reviews compiler warnings.
+Every target checks both ELF files for architecture and static linkage, compares FFmpeg's component lists against the expected sets, probes and decodes the video smoke clips (including a pinned VVC conformance stream), decodes AAC audio-bearing variants to mono 8 kHz float PCM and checks output duration, verifies seeking, refuses network input and requires zero compiler warnings.
 
 ## Licences
 

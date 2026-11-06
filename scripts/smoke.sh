@@ -45,6 +45,31 @@ for spec in \
   echo "  ok    $codec: probed and decoded 60 frames; seek verified"
 done
 
+for input in "$clips"/audio/*-aac.mkv; do
+  name=$(basename "$input")
+  codec=$(probe_run -select_streams a:0 -show_entries stream=codec_name -of csv=p=0 "$input" \
+    | sed -e 's/,$//' -e '/^$/d' | head -n1)
+  [[ "$codec" == aac ]] || { echo "WRONG $name probe: expected aac, got $codec" >&2; exit 1; }
+  sample_rate=$(probe_run -select_streams a:0 -show_entries stream=sample_rate -of csv=p=0 "$input" \
+    | sed -e 's/,$//' -e '/^$/d' | head -n1)
+  [[ "$sample_rate" =~ ^[0-9]+ ]] \
+    || { echo "WRONG $name probe: invalid sample rate" >&2; exit 1; }
+  raw="$work/$name.f32le"
+  run -ss 0 -i "$input" -vn -sn -ac 1 -ar 8000 -f f32le - > "$raw"
+  expected_bytes=64000
+  frame_bytes=$(awk -v rate="$sample_rate" 'BEGIN { printf "%d", (1024 * 8000 / rate + 0.999999) * 4 }')
+  actual_bytes=$(stat -c %s "$raw")
+  delta=$((actual_bytes - expected_bytes))
+  if (( delta < 0 )); then delta=$((-delta)); fi
+  (( delta <= frame_bytes )) \
+    || { echo "WRONG $name PCM length: expected $expected_bytes +/- $frame_bytes, got $actual_bytes" >&2; exit 1; }
+  peak=$(od -An -v -t f4 "$raw" \
+    | awk '{ for (i = 1; i <= NF; i++) { value = $i < 0 ? -$i : $i; if (value > peak) peak = value } } END { print peak + 0 }')
+  awk -v peak="$peak" 'BEGIN { exit !(peak > 0.01) }' \
+    || { echo "WRONG $name decoded silence" >&2; exit 1; }
+  echo "  ok    $name: AAC to mono 8 kHz float, $actual_bytes bytes"
+done
+
 vvc_metadata=$(probe_run -select_streams v:0 -show_entries stream=codec_name,width,height -of csv=p=0 "$vvc_sample")
 IFS=, read -r vvc_codec vvc_width vvc_height <<< "$vvc_metadata"
 [[ "$vvc_codec" == vvc && "$vvc_width" =~ ^[0-9]+$ && "$vvc_height" =~ ^[0-9]+$ ]] \
@@ -60,4 +85,4 @@ fi
 grep -q 'Protocol not found' "$work/network.txt" || { echo "WRONG network input failed for an unexpected reason" >&2; exit 1; }
 echo "  ok    network input refused"
 
-echo "[OK] video decode, probe, seek, and network-isolation checks passed"
+echo "[OK] video/audio decode, probe, seek, and network-isolation checks passed"

@@ -2,6 +2,7 @@ abuffer
 abuffersink
 aformat
 anull
+aresample
 atrim
 buffer
 buffersink

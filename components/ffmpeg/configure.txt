@@ -1,4 +1,4 @@
-# evovpeg decodes video files to raw frames on stdout and probes video streams.
+# evovpeg decodes local media to raw video frames or audio PCM on stdout and probes streams.
 --disable-everything
 --disable-autodetect
 --disable-network
@@ -14,12 +14,13 @@
 --disable-debug
 --enable-pthreads
 --enable-protocol=file,pipe
---enable-demuxer=mov,matroska,mpegts,mpegps,avi,h264,hevc,vvc,ivf,webm_dash_manifest
---enable-decoder=h264,hevc,vvc,mpeg2video,mpeg4,vp8,vp9,av1,libdav1d
+--enable-demuxer=mov,matroska,mpegts,mpegps,avi,asf,h264,hevc,vvc,ivf,webm_dash_manifest
+--enable-decoder=h264,hevc,vvc,mpeg2video,mpeg4,vp8,vp9,av1,libdav1d,aac,aac_latm,ac3,eac3,dca,truehd,mlp,mp3float,mp2float,opus,vorbis,flac,alac,wmav2,pcm_s16le,pcm_s16be,pcm_s24le,pcm_s32le,pcm_f32le
 --enable-libdav1d
---enable-parser=h264,hevc,vvc,mpegvideo,mpeg4video,vp8,vp9,av1
+--enable-parser=h264,hevc,vvc,mpegvideo,mpeg4video,vp8,vp9,av1,aac,aac_latm,ac3,dca,mlp,mpegaudio,flac,opus,vorbis
 --enable-bsf=h264_mp4toannexb,hevc_mp4toannexb,vvc_mp4toannexb,extract_extradata
---enable-encoder=rawvideo,wrapped_avframe
---enable-muxer=rawvideo,null
---enable-filter=scale,format,fps,null
+--enable-swresample
+--enable-encoder=rawvideo,wrapped_avframe,pcm_f32le
+--enable-muxer=rawvideo,null,pcm_f32le
+--enable-filter=scale,format,fps,null,aresample,aformat,anull
 --pkg-config-flags=--static
