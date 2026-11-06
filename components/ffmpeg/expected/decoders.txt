@@ -1,0 +1,10 @@
+av1
+h263
+h264
+hevc
+libdav1d
+mpeg2video
+mpeg4
+vp8
+vp9
+vvc

@@ -1,0 +1,4 @@
+in:file
+in:pipe
+out:file
+out:pipe

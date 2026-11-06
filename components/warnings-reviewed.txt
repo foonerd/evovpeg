@@ -1,0 +1,1 @@
+# No warning patterns are allowlisted. Fix compiler warnings in source or build configuration.

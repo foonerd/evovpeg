@@ -1,0 +1,25 @@
+# evovpeg decodes video files to raw frames on stdout and probes video streams.
+--disable-everything
+--disable-autodetect
+--disable-network
+--disable-doc
+--disable-programs
+--enable-ffmpeg
+--enable-ffprobe
+--disable-avdevice
+--enable-swscale
+--enable-avfilter
+--disable-gpl
+--disable-nonfree
+--disable-debug
+--enable-pthreads
+--enable-protocol=file,pipe
+--enable-demuxer=mov,matroska,mpegts,mpegps,avi,h264,hevc,vvc,ivf,webm_dash_manifest
+--enable-decoder=h264,hevc,vvc,mpeg2video,mpeg4,vp8,vp9,av1,libdav1d
+--enable-libdav1d
+--enable-parser=h264,hevc,vvc,mpegvideo,mpeg4video,vp8,vp9,av1
+--enable-bsf=h264_mp4toannexb,hevc_mp4toannexb,vvc_mp4toannexb,extract_extradata
+--enable-encoder=rawvideo,wrapped_avframe
+--enable-muxer=rawvideo,null
+--enable-filter=scale,format,fps,null
+--pkg-config-flags=--static

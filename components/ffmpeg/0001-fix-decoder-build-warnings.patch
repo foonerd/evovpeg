@@ -1,0 +1,205 @@
+--- a/libavcodec/vlc.c
++++ b/libavcodec/vlc.c
+@@ -443,2 +443,9 @@
+-            if (is16bit) info.val16[curlevel] = sym;
+-            else info.val8[curlevel] = sym&0xFF;
++            if (is16bit) {
++                if (curlevel >= VLC_MULTI_MAX_SYMBOLS / 2)
++                    return;
++                info.val16[curlevel] = sym;
++            } else {
++                if (curlevel >= VLC_MULTI_MAX_SYMBOLS)
++                    return;
++                info.val8[curlevel] = sym & 0xFF;
++            }
+--- a/libavcodec/h263dec.c
++++ b/libavcodec/h263dec.c
+@@ -615,1 +615,3 @@
+-frame_end:
++#if CONFIG_WMV2_DECODER
++frame_end:
++#endif
+--- a/libavformat/rawdec.c
++++ b/libavformat/rawdec.c
+@@ -106,1 +106,2 @@
+-static int raw_data_read_header(AVFormatContext *s)
++#if CONFIG_DATA_DEMUXER
++static int raw_data_read_header(AVFormatContext *s)
+@@ -115,1 +116,2 @@
+ }
++#endif
+--- a/libavcodec/vvc/ctu.h
++++ b/libavcodec/vvc/ctu.h
+@@ -445,1 +445,2 @@
+             DECLARE_ALIGNED(32, uint8_t, edge_emu_buffer)[EDGE_EMU_BUFFER_STRIDE * EDGE_EMU_BUFFER_STRIDE * 2];
++            DECLARE_ALIGNED(32, int16_t, scaled_tmp)[EDGE_EMU_BUFFER_STRIDE * MAX_PB_SIZE];
+--- a/libavcodec/vvc/dsp.h
++++ b/libavcodec/vvc/dsp.h
+@@ -63,1 +63,1 @@
+-        int16_t *dst, const uint8_t *src, ptrdiff_t src_stride, int src_height,
++        int16_t *tmp, int16_t *dst, const uint8_t *src, ptrdiff_t src_stride, int src_height,
+@@ -67,1 +67,1 @@
+-        uint8_t *dst, const ptrdiff_t dst_stride, const uint8_t *src, ptrdiff_t src_stride, int src_height,
++        int16_t *tmp, uint8_t *dst, const ptrdiff_t dst_stride, const uint8_t *src, ptrdiff_t src_stride, int src_height,
+@@ -71,1 +71,1 @@
+-        uint8_t *dst, const ptrdiff_t dst_stride, const uint8_t *src, ptrdiff_t src_stride, int src_height,
++        int16_t *tmp, uint8_t *dst, const ptrdiff_t dst_stride, const uint8_t *src, ptrdiff_t src_stride, int src_height,
+--- a/libavcodec/vvc/inter.c
++++ b/libavcodec/vvc/inter.c
+@@ -437,1 +437,2 @@
+-    fc->vvcdsp.inter.put_scaled[is_chroma][idx](dst, src, src_stride, src_height, x, y, dx, dy, block_h, hf, vf, block_w);
++    fc->vvcdsp.inter.put_scaled[is_chroma][idx](lc->pred.scaled_tmp, dst, src, src_stride, src_height,
++                                                x, y, dx, dy, block_h, hf, vf, block_w);
+@@ -460,1 +460,1 @@
+-        fc->vvcdsp.inter.put_uni_w_scaled[is_chroma][idx](dst, dst_stride, src, src_stride, src_height,
++        fc->vvcdsp.inter.put_uni_w_scaled[is_chroma][idx](lc->pred.scaled_tmp, dst, dst_stride, src, src_stride, src_height,
+@@ -463,1 +463,1 @@
+-        fc->vvcdsp.inter.put_uni_scaled[is_chroma][idx](dst, dst_stride, src, src_stride, src_height,
++        fc->vvcdsp.inter.put_uni_scaled[is_chroma][idx](lc->pred.scaled_tmp, dst, dst_stride, src, src_stride, src_height,
+--- a/libavcodec/vvc/inter_template.c
++++ b/libavcodec/vvc/inter_template.c
+@@ -27,1 +27,1 @@
+-static void av_always_inline FUNC(put_scaled)(uint8_t *_dst, const ptrdiff_t _dst_stride,
++static void av_always_inline FUNC(put_scaled)(int16_t *tmp_array, uint8_t *_dst, const ptrdiff_t _dst_stride,
+@@ -32,1 +32,0 @@
+-    int16_t tmp_array[TMP_STRIDE * MAX_PB_SIZE];
+@@ -84,1 +84,1 @@
+-static void FUNC(put_luma_scaled)(int16_t *_dst,
++static void FUNC(put_luma_scaled)(int16_t *tmp_array, int16_t *_dst,
+@@ -89,1 +89,1 @@
+-    FUNC(put_scaled)((uint8_t *)_dst, MAX_PB_SIZE * sizeof(pixel), _src, _src_stride, src_height, x, y, dx, dy, height, hf, vf, width, 0, 0);
++    FUNC(put_scaled)(tmp_array, (uint8_t *)_dst, MAX_PB_SIZE * sizeof(pixel), _src, _src_stride, src_height, x, y, dx, dy, height, hf, vf, width, 0, 0);
+@@ -92,1 +92,1 @@
+-static void FUNC(put_chroma_scaled)(int16_t *_dst,
++static void FUNC(put_chroma_scaled)(int16_t *tmp_array, int16_t *_dst,
+@@ -97,1 +97,1 @@
+-    FUNC(put_scaled)((uint8_t *)_dst, MAX_PB_SIZE * sizeof(pixel), _src, _src_stride, src_height, x, y, dx, dy, height, hf, vf, width, 0, 1);
++    FUNC(put_scaled)(tmp_array, (uint8_t *)_dst, MAX_PB_SIZE * sizeof(pixel), _src, _src_stride, src_height, x, y, dx, dy, height, hf, vf, width, 0, 1);
+@@ -100,1 +100,1 @@
+-static void FUNC(put_uni_luma_scaled)(uint8_t *_dst, const ptrdiff_t _dst_stride,
++static void FUNC(put_uni_luma_scaled)(int16_t *tmp_array, uint8_t *_dst, const ptrdiff_t _dst_stride,
+@@ -105,1 +105,1 @@
+-    FUNC(put_scaled)(_dst, _dst_stride, _src, _src_stride, src_height, x, y, dx, dy, height, hf, vf, width, 1, 0);
++    FUNC(put_scaled)(tmp_array, _dst, _dst_stride, _src, _src_stride, src_height, x, y, dx, dy, height, hf, vf, width, 1, 0);
+@@ -108,1 +108,1 @@
+-static void FUNC(put_uni_chroma_scaled)(uint8_t *_dst, const ptrdiff_t _dst_stride,
++static void FUNC(put_uni_chroma_scaled)(int16_t *tmp_array, uint8_t *_dst, const ptrdiff_t _dst_stride,
+@@ -113,1 +113,1 @@
+-    FUNC(put_scaled)(_dst, _dst_stride, _src, _src_stride, src_height, x, y, dx, dy, height, hf, vf, width, 1, 1);
++    FUNC(put_scaled)(tmp_array, _dst, _dst_stride, _src, _src_stride, src_height, x, y, dx, dy, height, hf, vf, width, 1, 1);
+@@ -116,1 +116,1 @@
+-static void av_always_inline FUNC(put_uni_w_scaled)(uint8_t *_dst, const ptrdiff_t _dst_stride,
++static void av_always_inline FUNC(put_uni_w_scaled)(int16_t *tmp_array, uint8_t *_dst, const ptrdiff_t _dst_stride,
+@@ -123,1 +123,0 @@
+-    int16_t tmp_array[TMP_STRIDE * MAX_PB_SIZE];
+@@ -167,1 +167,1 @@
+-static void FUNC(put_uni_luma_w_scaled)(uint8_t *_dst, const ptrdiff_t _dst_stride,
++static void FUNC(put_uni_luma_w_scaled)(int16_t *tmp_array, uint8_t *_dst, const ptrdiff_t _dst_stride,
+@@ -172,1 +172,1 @@
+-    FUNC(put_uni_w_scaled)(_dst, _dst_stride, _src, _src_stride, src_height, x, y, dx, dy, denom, wx, ox, height, hf, vf, width, 0);
++    FUNC(put_uni_w_scaled)(tmp_array, _dst, _dst_stride, _src, _src_stride, src_height, x, y, dx, dy, denom, wx, ox, height, hf, vf, width, 0);
+@@ -175,1 +175,1 @@
+-static void FUNC(put_uni_chroma_w_scaled)(uint8_t *_dst, const ptrdiff_t _dst_stride,
++static void FUNC(put_uni_chroma_w_scaled)(int16_t *tmp_array, uint8_t *_dst, const ptrdiff_t _dst_stride,
+@@ -180,1 +180,1 @@
+-    FUNC(put_uni_w_scaled)(_dst, _dst_stride, _src, _src_stride, src_height, x, y, dx, dy,  denom, wx, ox, height, hf, vf, width, 1);
++    FUNC(put_uni_w_scaled)(tmp_array, _dst, _dst_stride, _src, _src_stride, src_height, x, y, dx, dy,  denom, wx, ox, height, hf, vf, width, 1);
+--- a/libavformat/mpegts.c
++++ b/libavformat/mpegts.c
+@@ -333,0 +334,15 @@
++static void swap_program(struct Program *a, struct Program *b)
++{
++    FFSWAP(unsigned int, a->id, b->id);
++    FFSWAP(unsigned int, a->nb_pids, b->nb_pids);
++    FFSWAP(unsigned int, a->nb_streams, b->nb_streams);
++    FFSWAP(unsigned int, a->nb_stream_groups, b->nb_stream_groups);
++    FFSWAP(int, a->pmt_found, b->pmt_found);
++
++    for (int i = 0; i < MAX_PIDS_PER_PROGRAM; i++)
++        FFSWAP(unsigned int, a->pids[i], b->pids[i]);
++    for (int i = 0; i < MAX_STREAMS_PER_PROGRAM; i++) {
++        FFSWAP(struct Stream, a->streams[i], b->streams[i]);
++        FFSWAP(struct StreamGroup, a->stream_groups[i], b->stream_groups[i]);
++    }
++}
+@@ -2547,2 +2562,3 @@
+ static AVStream *find_matching_stream(MpegTSContext *ts, int pid, unsigned int programid,
+-                                      int stream_identifier, int pmt_stream_idx, struct Program *p)
++                                      int stream_identifier, int pmt_stream_idx,
++                                      unsigned int nb_streams, const struct Stream *streams)
+@@ -2554,1 +2570,1 @@
+-        for (int i = 0; i < p->nb_streams; i++) {
++        for (int i = 0; i < nb_streams; i++) {
+@@ -2555,1 +2571,1 @@
+-            if (p->streams[i].stream_identifier == stream_identifier)
++            if (streams[i].stream_identifier == stream_identifier)
+@@ -2557,1 +2573,1 @@
+-                    found = s->streams[p->streams[i].idx];
++                    found = s->streams[streams[i].idx];
+@@ -2559,1 +2575,1 @@
+-    } else if (pmt_stream_idx < p->nb_streams) { /* match based on position within the PMT */
++    } else if (pmt_stream_idx < nb_streams) { /* match based on position within the PMT */
+@@ -2560,1 +2576,1 @@
+-        found = s->streams[p->streams[pmt_stream_idx].idx];
++        found = s->streams[streams[pmt_stream_idx].idx];
+@@ -2744,1 +2760,2 @@
+-    struct Program old_program;
++    struct Stream old_streams[MAX_STREAMS_PER_PROGRAM];
++    unsigned int old_nb_streams = 0;
+@@ -2779,5 +2796,5 @@
+     prg = get_program(ts, h->id);
+-    if (prg)
+-        old_program = *prg;
+-    else
+-        clear_program(&old_program);
++    if (prg) {
++        old_nb_streams = FFMIN(prg->nb_streams, MAX_STREAMS_PER_PROGRAM);
++        memcpy(old_streams, prg->streams, old_nb_streams * sizeof(*old_streams));
++    }
+@@ -2862,1 +2879,2 @@
+-                st = find_matching_stream(ts, pid, h->id, stream_identifier, i, &old_program);
++                st = find_matching_stream(ts, pid, h->id, stream_identifier, i,
++                                          old_nb_streams, old_streams);
+@@ -2881,1 +2899,2 @@
+-                st = find_matching_stream(ts, pid, h->id, stream_identifier, i, &old_program);
++                st = find_matching_stream(ts, pid, h->id, stream_identifier, i,
++                                          old_nb_streams, old_streams);
+@@ -2900,1 +2920,2 @@
+-                st = find_matching_stream(ts, pid, h->id, stream_identifier, i, &old_program);
++                st = find_matching_stream(ts, pid, h->id, stream_identifier, i,
++                                          old_nb_streams, old_streams);
+@@ -3036,1 +3058,1 @@
+-                    FFSWAP(struct Program, ts->prg[nb_prg], ts->prg[prg_idx]);
++                    swap_program(&ts->prg[nb_prg], &ts->prg[prg_idx]);
+--- a/libavutil/arm/cpu.c
++++ b/libavutil/arm/cpu.c
+@@ -50,6 +50,18 @@
+-#define HWCAP_ARM_VFP     (1 << 6)
+-#define HWCAP_ARM_EDSP    (1 << 7)
+-#define HWCAP_ARM_THUMBEE (1 << 11)
+-#define HWCAP_ARM_NEON    (1 << 12)
+-#define HWCAP_ARM_VFPv3   (1 << 13)
+-#define HWCAP_ARM_TLS     (1 << 15)
++#ifndef HWCAP_ARM_VFP
++#define HWCAP_ARM_VFP     (1 << 6)
++#endif
++#ifndef HWCAP_ARM_EDSP
++#define HWCAP_ARM_EDSP    (1 << 7)
++#endif
++#ifndef HWCAP_ARM_THUMBEE
++#define HWCAP_ARM_THUMBEE (1 << 11)
++#endif
++#ifndef HWCAP_ARM_NEON
++#define HWCAP_ARM_NEON    (1 << 12)
++#endif
++#ifndef HWCAP_ARM_VFPv3
++#define HWCAP_ARM_VFPv3   (1 << 13)
++#endif
++#ifndef HWCAP_ARM_TLS
++#define HWCAP_ARM_TLS     (1 << 15)
++#endif
+--- a/libavcodec/pthread_frame.c
++++ b/libavcodec/pthread_frame.c
+@@ -183,1 +183,1 @@
+-    snprintf(name, sizeof(name), "av:%.7s:df%d", avctx->codec->name, idx);
++    snprintf(name, sizeof(name), "av:%.3s:%08x", avctx->codec->name, (unsigned)idx);

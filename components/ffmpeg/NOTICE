@@ -1,0 +1,20 @@
+evovpeg: a static video decoder and stream prober for the evo framework
+(https://evoframework.org). It reads local video files and writes raw frames to stdout;
+its prober reports video stream properties. It has no network or device I/O. The recipe
+is public at https://github.com/foonerd/evovpeg; the build.json beside this file names
+the exact sources, digests and configure set.
+
+The binaries bin/evovpeg and bin/evovprobe statically link:
+
+  FFmpeg       GNU Lesser General Public License, version 2.1 or later
+               (ffmpeg-COPYING.LGPLv2.1; ffmpeg-LICENSE.md identifies other file terms).
+               Built without --enable-gpl or --enable-nonfree.
+  dav1d        BSD 2-Clause License (dav1d-COPYING).
+
+The resulting binaries are distributed under the GNU Lesser General Public License,
+version 2.1 or later. Their complete corresponding source is the FFmpeg and dav1d
+release source named in build.json and the evovpeg recipe, which rebuilds both programs.
+A program that runs either binary as a separate process is not a work based on it.
+
+evovpeg's own work, recipe, scripts and packaging are under the MIT licence (the LICENSE
+file beside this folder).

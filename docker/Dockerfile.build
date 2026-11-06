@@ -1,0 +1,16 @@
+# The build environment: Debian bookworm, the release Volumio runs, with its own compiler
+# and C library, the tools the five configure scripts and makefiles need, and nothing
+# else. One image per target, differing only in the platform it is pulled for. The
+# upstream tarballs are added as a layer on top by build.sh; the build runs with the
+# network off.
+FROM debian:bookworm-slim
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+# nasm assembles FFmpeg's x86 routines; the ARM ones are inline, so only amd64 takes it.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends build-essential file make meson ninja-build patch pkg-config xz-utils \
+    && if [ "$(dpkg --print-architecture)" = amd64 ]; then apt-get install -y --no-install-recommends nasm; fi \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /work

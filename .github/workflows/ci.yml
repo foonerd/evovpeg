@@ -1,0 +1,51 @@
+name: ci
+
+# Every push: the workshop pass, then the build of every target with its own proof, each
+# on a machine of its own architecture (nothing is emulated). What a target built is kept
+# with the run. The build images, with the upstream tarballs in them, are kept in the
+# repository's registry under a key of the lock files, so upstream is asked only when a
+# lock changes.
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+env:
+  BUILDER_REGISTRY: ghcr.io/${{ github.repository }}-builder
+  BUILDER_PUSH: 1
+
+jobs:
+  check:
+    name: check
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - run: scripts/check.sh
+
+  build:
+    name: ${{ matrix.target }}
+    needs: check
+    runs-on: ${{ matrix.runner }}
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { target: armv7, runner: ubuntu-24.04-arm }
+          - { target: armv8, runner: ubuntu-24.04-arm }
+          - { target: x64, runner: ubuntu-24.04 }
+    steps:
+      - uses: actions/checkout@v7
+      - name: Log in to the registry
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+      - run: ./build.sh ${{ matrix.target }}
+      - uses: actions/upload-artifact@v7
+        with:
+          name: evovpeg-${{ matrix.target }}
+          path: out/${{ matrix.target }}
+          if-no-files-found: error

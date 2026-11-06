@@ -1,0 +1,10 @@
+avi
+h264
+hevc
+ivf
+matroska,webm
+mov,mp4,m4a,3gp,3g2,mj2
+mpeg
+mpegts
+vvc
+webm_dash_manifest

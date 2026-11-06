@@ -1,0 +1,5 @@
+NAME=vvc-test-vector
+VERSION=FFmpeg-FATE-CodingToolsSets_A_2
+URL=https://fate-suite.ffmpeg.org/vvc-conformance/CodingToolsSets_A_2.bit
+SHA256=f6ed0be5621fb45ff0fc0c55548757c690858507f45e0479839d118d4d24bfd7
+LICENSE=NOASSERTION
