@@ -2,7 +2,11 @@
 
 All notable changes to evovpeg. Versions follow Semantic Versioning and move when the source or build recipe changes.
 
-## [0.3.0] - 2026-11-07
+## [0.3.1] - 2026-11-07
+
+### Fixed
+
+- Group parallel FFmpeg build output per target so linker diagnostics remain intact and the warning gate can validate them reliably.
 
 ### Added
 

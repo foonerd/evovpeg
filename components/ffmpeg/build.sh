@@ -83,7 +83,7 @@ mapfile -t flags < <(
     --extra-cflags="$TARGET_CFLAGS -isystem $prefix/include" \
     --extra-ldflags="-L$prefix/lib -static -Wl,--gc-sections" \
     "${flags[@]}"
-  make -j"$jobs"
+  make --output-sync=target -j"$jobs"
   make install
 )
 install -m 755 "$WORK/ffmpeg-install/bin/ffmpeg" "$OUT/bin/evovpeg"
@@ -102,7 +102,7 @@ mkdir -p "$WORK/fixture-build"
     --enable-protocol=file,pipe --enable-demuxer=rawvideo,flv --enable-decoder=rawvideo,h264,aac \
     --enable-encoder=png,mjpeg,rawvideo --enable-muxer=image2,image2pipe,rawvideo --enable-filter=scale --enable-swscale \
     --pkg-config-flags=--static
-  make -j"$jobs" ffmpeg ffprobe
+  make --output-sync=target -j"$jobs" ffmpeg ffprobe
 )
 bash "$here/../../scripts/encode-smoke.sh" "$OUT/bin/evovpeg" \
   "$OUT/bin/evovprobe" "$WORK/fixture-build/ffmpeg" /src/tests/clips "$WORK/encode-smoke"
