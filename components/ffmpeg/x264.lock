@@ -1,0 +1,5 @@
+NAME=x264
+VERSION=0480cb05fa188d37ae87e8f4fd8f1aea3711f7ee
+URL=https://code.videolan.org/videolan/x264/-/archive/0480cb05fa188d37ae87e8f4fd8f1aea3711f7ee/x264-0480cb05fa188d37ae87e8f4fd8f1aea3711f7ee.tar.bz2
+SHA256=f05c59f2e83d494c36307025dca2d3afc6b4d185f3a3453d06cc4fecd7094057
+LICENSE=GPL-2.0-or-later

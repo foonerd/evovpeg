@@ -6,6 +6,7 @@
 #   write-manifest.sh <target>
 set -euo pipefail
 root=$(cd "$(dirname "$0")/.." && pwd)
+. "$root/scripts/targets.sh"
 target=$1
 out="$root/out/$target"
 [ -x "$out/bin/evovpeg" ] || { echo "error: $out/bin/evovpeg is missing" >&2; exit 1; }
@@ -39,6 +40,10 @@ json_string() { printf '"%s"' "$(printf '%s' "$1" | sed 's/["\\]/\\&/g')"; }
   echo "    \"ffmpeg\": {"
   echo "      \"file\": \"components/ffmpeg/0001-fix-decoder-build-warnings.patch\","
   echo "      \"sha256\": \"$(sha256sum "$root/components/ffmpeg/0001-fix-decoder-build-warnings.patch" | cut -d' ' -f1)\""
+  echo "    },"
+  echo "    \"x264\": {"
+  echo "      \"file\": \"components/ffmpeg/x264-build-warnings.patch\","
+  echo "      \"sha256\": \"$(sha256sum "$root/components/ffmpeg/x264-build-warnings.patch" | cut -d' ' -f1)\""
   echo "    }"
   echo "  },"
   echo "  \"configure\": ["
@@ -47,7 +52,7 @@ json_string() { printf '"%s"' "$(printf '%s' "$1" | sed 's/["\\]/\\&/g')"; }
     [ "$first" -eq 1 ] || echo ","
     first=0
     printf '    %s' "$(json_string "$flag")"
-  done < <(grep -vE '^[[:space:]]*(#|$)' "$root/components/ffmpeg/configure.txt")
+  done < <(grep -vE '^[[:space:]]*(#|$)' "$root/components/ffmpeg/configure.txt"; target_configure_flags "$target")
   echo
   echo "  ],"
   echo "  \"files\": {"

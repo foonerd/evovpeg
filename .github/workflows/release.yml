@@ -48,6 +48,12 @@ jobs:
       - name: Log in to the registry
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
       - run: ./build.sh ${{ matrix.target }}
+      - run: bash scripts/network-smoke.sh ${{ matrix.target }}
+      - name: Paced encode latency
+        if: matrix.target == 'x64'
+        run: |
+          out/x64/bin/evovpeg -nostdin -v error -i tests/clips/flash-h264.mp4 -an -sn -frames:v 1 -pix_fmt yuv420p -f rawvideo /tmp/peg-frame.yuv
+          docker run --rm --network none -v "$PWD:/src:ro" -v /tmp/peg-frame.yuv:/frame:ro node:20-bookworm-slim node /src/tests/measure-encode.cjs /src/out/x64/bin/evovpeg /frame
       - uses: actions/upload-artifact@v7
         with:
           name: evovpeg-${{ matrix.target }}
@@ -78,6 +84,10 @@ jobs:
           scripts/verify-set.sh out/x64/bin/evovpeg . out/x64/bin/evovprobe x64
       # Every file of every build is checked against the digest its build.json recorded.
       - run: scripts/package.sh
+      - name: Corresponding source
+        run: |
+          scripts/fetch-sources.sh
+          bash scripts/package-sources.sh
       # Every archive carries MANIFEST and its signature; SHA256SUMS and its signature
       # stand beside them. The private key comes from the repository's secret
       # RELEASE_SIGNING_KEY (the Ed25519 key as PEM); the public key the consumers carry
@@ -108,4 +118,4 @@ jobs:
           version="${GITHUB_REF_NAME#v}"
           { scripts/release-notes.sh "$version"; printf '\n'; cat .github/release-footer.md; } > dist/notes.md
           gh release create "$GITHUB_REF_NAME" --title "evovpeg $version" --notes-file dist/notes.md --prerelease \
-            dist/evovpeg-*.tar.gz dist/manifest.json dist/SHA256SUMS dist/SHA256SUMS.sig
+            dist/evovpeg-*.tar.gz dist/evovpeg-sources-*.tar.xz dist/manifest.json dist/SHA256SUMS dist/SHA256SUMS.sig

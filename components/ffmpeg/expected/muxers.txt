@@ -1,3 +1,7 @@
 f32le
+flv
+h264
+mov
+mp4
 null
 rawvideo

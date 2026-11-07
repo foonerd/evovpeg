@@ -1,11 +1,17 @@
 asf
 avi
+f32le
 h264
 hevc
+image2
 ivf
 matroska,webm
 mov,mp4,m4a,3gp,3g2,mj2
 mpeg
 mpegts
+rawvideo
+s16le
+s24le
+s32le
 vvc
 webm_dash_manifest

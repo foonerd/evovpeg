@@ -1,6 +1,8 @@
 evovpeg: static video and audio decoders and a stream prober for the evo framework
 (https://evoframework.org). It reads local media and writes raw video frames or audio
-PCM to stdout; its prober reports stream properties. It has no network or device I/O.
+PCM to stdout and encodes H.264/AAC for Outcast; its prober reports stream properties.
+It supports local files, pipes and HTTP/HTTPS. Device capture/output modules are disabled;
+ARM builds retain the V4L2 M2M decoders, which require compatible device drivers.
 The recipe is public at https://github.com/foonerd/evovpeg; the build.json beside this
 file names the exact sources, digests and configure set.
 
@@ -8,13 +10,16 @@ The binaries bin/evovpeg and bin/evovprobe statically link:
 
   FFmpeg       GNU Lesser General Public License, version 2.1 or later
                (ffmpeg-COPYING.LGPLv2.1; ffmpeg-LICENSE.md identifies other file terms).
-               Built without --enable-gpl or --enable-nonfree.
+               Built with --enable-gpl and --enable-version3, without non-free components.
   dav1d        BSD 2-Clause License (dav1d-COPYING).
+  x264         GNU GPL version 2 or later (x264-COPYING).
+  mbedTLS      Apache License 2.0 (mbedtls-LICENSE).
+  zlib         Zlib license (zlib-LICENSE).
 
-The resulting binaries are distributed under the GNU Lesser General Public License,
-version 2.1 or later. Their complete corresponding source is the FFmpeg and dav1d
+The resulting binaries are distributed under the GNU General Public License,
+version 3 or later (ffmpeg-COPYING.GPLv3). Their corresponding source is the upstream
 release source named in build.json and the evovpeg recipe, which rebuilds both programs.
-A program that runs either binary as a separate process is not a work based on it.
+Consumers invoke these binaries as separate programs.
 
 evovpeg's own work, recipe, scripts and packaging are under the MIT licence (the LICENSE
 file beside this folder).

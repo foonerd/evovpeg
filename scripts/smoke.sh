@@ -95,11 +95,11 @@ esac
   || { echo "WRONG $target V4L2 M2M decoder count: expected $expected_m2m, got $m2m_count" >&2; exit 1; }
 echo "  ok    $target V4L2 M2M decoders: $m2m_count"
 
-if run -i http://127.0.0.1:9/unreachable -frames:v 1 -f null - 2> "$work/network.txt"; then
+if run -protocol_whitelist file,pipe -i http://127.0.0.1:9/unreachable -frames:v 1 -f null - 2> "$work/network.txt"; then
   echo "WRONG network input was not refused" >&2
   exit 1
 fi
-grep -q 'Protocol not found' "$work/network.txt" || { echo "WRONG network input failed for an unexpected reason" >&2; exit 1; }
+grep -q 'not on whitelist' "$work/network.txt" || { echo "WRONG network input failed for an unexpected reason" >&2; exit 1; }
 echo "  ok    network input refused"
 
 echo "[OK] video/audio decode, probe, seek, and network-isolation checks passed"

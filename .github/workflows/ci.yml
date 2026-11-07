@@ -44,6 +44,12 @@ jobs:
       - name: Log in to the registry
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
       - run: ./build.sh ${{ matrix.target }}
+      - run: bash scripts/network-smoke.sh ${{ matrix.target }}
+      - name: Paced encode latency
+        if: matrix.target == 'x64'
+        run: |
+          out/x64/bin/evovpeg -nostdin -v error -i tests/clips/flash-h264.mp4 -an -sn -frames:v 1 -pix_fmt yuv420p -f rawvideo /tmp/peg-frame.yuv
+          docker run --rm --network none -v "$PWD:/src:ro" -v /tmp/peg-frame.yuv:/frame:ro node:20-bookworm-slim node /src/tests/measure-encode.cjs /src/out/x64/bin/evovpeg /frame
       - uses: actions/upload-artifact@v7
         with:
           name: evovpeg-${{ matrix.target }}

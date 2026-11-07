@@ -1,0 +1,59 @@
+--- a/encoder/rdo.c
++++ b/encoder/rdo.c
+@@ -761,6 +761,8 @@
+     // position, so the order doesn't matter, and we don't even have to update the contexts.
+     // in 8x8 blocks, some positions share contexts, so we'll just have to hope that
+     // cabac isn't too sensitive.
++    int cost_siglast[3];
++    uint64_t ssd0[2], ssd1[2];
+     int i = last_nnz;
+ #define TRELLIS_LOOP(ctx_hi)\
+     for( ; i >= b_ac; i-- )\
+@@ -792,7 +794,6 @@
+         int sign_coef = orig_coefs[zigzag[i]];\
+         int abs_coef = abs( sign_coef );\
+         int q = abs( quant_coefs[i] );\
+-        int cost_siglast[3]; /* { zero, nonzero, nonzero-and-last } */\
+         XCHG( trellis_node_t*, nodes_cur, nodes_prev );\
+         for( int j = ctx_hi; j < 8; j++ )\
+             nodes_cur[j].score = TRELLIS_SCORE_MAX;\
+@@ -824,7 +825,6 @@
+          * but it's only around .003 dB, and skipping them ~doubles the speed of trellis.\
+          * could also try q-2: that sometimes helps, but also sometimes decimates blocks\
+          * that are better left coded, especially at QP > 40. */\
+-        uint64_t ssd0[2], ssd1[2];\
+         for( int k = 0; k < 2; k++ )\
+         {\
+             int abs_level = q-1+k;\
+--- a/common/cpu.c
++++ b/common/cpu.c
+@@ -110,6 +110,7 @@
+     {"", 0},
+ };
+ 
++#if ARCH_ARM || ARCH_AARCH64 || ARCH_PPC
+ static unsigned long x264_getauxval( unsigned long type )
+ {
+ #if HAVE_GETAUXVAL
+@@ -123,6 +124,7 @@
+     return 0;
+ #endif
+ }
++#endif
+ 
+ #if ((HAVE_ALTIVEC && SYS_LINUX) || (HAVE_ARMV6 && !HAVE_NEON)) && !(HAVE_GETAUXVAL || HAVE_ELF_AUX_INFO)
+ #include <signal.h>
+--- a/common/bitstream.h
++++ b/common/bitstream.h
+@@ -115,1 +115,1 @@
+-    int offset = ((intptr_t)s->p & 3);
++    int offset = (s->p - s->p_start) & 3;
+
+--- a/common/cpu.c
++++ b/common/cpu.c
+@@ -416,1 +416,3 @@
++#ifndef HWCAP_ARM_NEON
+ #define HWCAP_ARM_NEON   (1U << 12)
++#endif
+
+# End of patch.

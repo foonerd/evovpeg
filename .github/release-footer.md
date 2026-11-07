@@ -7,4 +7,4 @@ evovpeg is part of the evo framework (https://evoframework.org): free and open s
 - GitHub Sponsors: https://github.com/sponsors/foonerd
 - Ko-fi: https://ko-fi.com/justanerd
 
-evovpeg's own work is provided as-is under the MIT licence; the binary is a static build of FFmpeg and dav1d under their own licences, named in each archive's NOTICE. Sponsorship is a thank-you, not a purchase: it buys no priority, no features and no support agreement.
+evovpeg's own work is provided as-is under the MIT licence; the binaries are distributed under GPL version 3 or later and statically include FFmpeg, dav1d, x264, mbedTLS and zlib. Each archive's NOTICE identifies the dependency terms; the release includes corresponding source. Sponsorship is a thank-you, not a purchase: it buys no priority, no features and no support agreement.

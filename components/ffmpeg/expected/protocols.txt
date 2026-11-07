@@ -1,4 +1,12 @@
 in:file
+in:http
+in:https
 in:pipe
+in:tcp
+in:tls
 out:file
+out:http
+out:https
 out:pipe
+out:tcp
+out:tls

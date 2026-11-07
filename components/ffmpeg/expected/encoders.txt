@@ -1,3 +1,5 @@
+aac
+libx264
 pcm_f32le
 rawvideo
 wrapped_avframe

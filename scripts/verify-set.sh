@@ -65,7 +65,7 @@ while IFS= read -r flag; do
     fail=1
   fi
 done < <(target_configure_flags "$target")
-for forbidden in --enable-gpl --enable-nonfree --enable-network --enable-avdevice; do
+for forbidden in --enable-nonfree --enable-avdevice; do
   if grep -qF -- "$forbidden" <<< "$buildconf"; then
     echo "  WRONG build configuration: $forbidden is in it"
     fail=1

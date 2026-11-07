@@ -9,7 +9,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 # nasm assembles FFmpeg's x86 routines; the ARM ones are inline, so only amd64 takes it.
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends build-essential file make meson ninja-build patch pkg-config xz-utils \
+    && apt-get install -y --no-install-recommends build-essential cmake file make meson ninja-build patch pkg-config xz-utils \
     && if [ "$(dpkg --print-architecture)" = amd64 ]; then apt-get install -y --no-install-recommends nasm; fi \
     && rm -rf /var/lib/apt/lists/*
 

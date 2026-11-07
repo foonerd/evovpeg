@@ -2,6 +2,22 @@
 
 All notable changes to evovpeg. Versions follow Semantic Versioning and move when the source or build recipe changes.
 
+## [0.3.0] - 2026-11-07
+
+### Added
+
+- HTTP and HTTPS input for both programs, with static mbedTLS, certificate and hostname verification, request headers, range seeking and timeout support.
+- Static x264 H.264 and native AAC encoding, PNG/JPEG/WebP and raw-frame input, raw PCM input, padding, and FLV, H.264 and fragmented MP4 output.
+- Network and H.264/AAC encode checks, including landscape/portrait still frames, dual-pipe input, two-second GOPs and decoded output verification.
+- Corresponding-source release archive with verified upstream sources, patches and the complete build recipe.
+- Bounded CPU, memory and paced encode-latency measurement tools.
+
+### Changed
+
+- The combined binaries are distributed under GPL version 3 or later; dependency licences are included in every binary archive.
+- Local-only invocations can restrict input with `-protocol_whitelist file,pipe`; network support is now included in the binary and that restriction is not an OS sandbox.
+- Existing software and ARM V4L2 M2M decoders remain enabled; HLS/DASH ingestion and RTMP transport are not added.
+
 ## [0.2.0] - 2026-11-06
 
 ### Added
