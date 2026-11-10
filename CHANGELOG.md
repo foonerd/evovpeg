@@ -2,43 +2,15 @@
 
 All notable changes to evovpeg. Versions follow Semantic Versioning and move when the source or build recipe changes.
 
-## [0.3.7] - 2026-11-10
-
-### Fixed
-
-- Run the Android x86_64 CI emulator with software translation and its required opt-in on GitHub-hosted runners that do not expose `/dev/kvm`.
-
-## [0.3.6] - 2026-11-10
-
-### Fixed
-
-- Set an explicit Android AVD home in CI and verify the Pixel 2 AVD is discoverable before starting the emulator.
-
-## [0.3.5] - 2026-11-10
-
-### Fixed
-
-- Select a standard Pixel 2 AVD explicitly and include emulator diagnostics if Android ADB startup times out.
-
-## [0.3.4] - 2026-11-10
-
-### Fixed
-
-- Use a longer, tail-indexed MP4 in the Windows HTTP smoke so the server must satisfy an actual Range request.
-- Use zygote and surfaceflinger readiness for Android 15 emulator startup instead of relying on `sys.boot_completed`.
-
-## [0.3.3] - 2026-11-10
-
-### Fixed
-
-- Normalize CRLF when comparing FFmpeg component lists so the Windows native verifier checks the same names as Unix builds.
-- Add Android platform-tools to the emulator job's PATH before invoking ADB.
-- Use a longer MP4 with a tail index in Windows HTTP smoke tests so range seeking is exercised instead of fitting in the initial read buffer.
-
 ## [0.3.2] - 2026-11-10
 
 ### Added
 
+- HTTP and HTTPS input for both programs, with static mbedTLS, certificate and hostname verification, request headers, range seeking and timeout support.
+- Static x264 H.264 and native AAC encoding, PNG/JPEG/WebP and raw-frame input, raw PCM input, padding, and FLV, H.264 and fragmented MP4 output.
+- Network and H.264/AAC encode checks, including landscape/portrait still frames, dual-pipe input, two-second GOPs and decoded output verification.
+- Corresponding-source release archive with verified upstream sources, patches and the complete build recipe.
+- Bounded CPU, memory and paced encode-latency measurement tools.
 - Windows x64 `evovpeg.exe` and `evovprobe.exe`, built with MinGW-w64 and checked for Windows-system-only DLL imports.
 - Android NDK builds for Glass's `armeabi-v7a`, `arm64-v8a` and `x86_64` ABIs, using API 24 and the platform C runtime.
 - Signed-release ZIP packaging for Windows and Android, with per-architecture decoder/prober paths and SHA-256 digests in `manifest.json`.
@@ -48,26 +20,15 @@ All notable changes to evovpeg. Versions follow Semantic Versioning and move whe
 
 - Cross-target dependency builds now use the pinned MinGW and Android NDK toolchains; Linux target outputs remain unchanged in format.
 - All platform binaries are represented in one release manifest; Windows/Android archives use ZIP and Linux archives remain tar.gz.
-
-## [0.3.1] - 2026-11-07
-
-### Fixed
-
-- Group parallel FFmpeg build output per target so linker diagnostics remain intact and the warning gate can validate them reliably.
-
-### Added
-
-- HTTP and HTTPS input for both programs, with static mbedTLS, certificate and hostname verification, request headers, range seeking and timeout support.
-- Static x264 H.264 and native AAC encoding, PNG/JPEG/WebP and raw-frame input, raw PCM input, padding, and FLV, H.264 and fragmented MP4 output.
-- Network and H.264/AAC encode checks, including landscape/portrait still frames, dual-pipe input, two-second GOPs and decoded output verification.
-- Corresponding-source release archive with verified upstream sources, patches and the complete build recipe.
-- Bounded CPU, memory and paced encode-latency measurement tools.
-
-### Changed
-
 - The combined binaries are distributed under GPL version 3 or later; dependency licences are included in every binary archive.
 - Local-only invocations can restrict input with `-protocol_whitelist file,pipe`; network support is now included in the binary and that restriction is not an OS sandbox.
 - Existing software and ARM V4L2 M2M decoders remain enabled; HLS/DASH ingestion and RTMP transport are not added.
+
+### Fixed
+
+- Keep parallel FFmpeg build diagnostics grouped so the warning gate receives intact output.
+- Normalize CRLF when comparing FFmpeg component lists, and use a tail-indexed MP4 to ensure Windows HTTP smoke exercises Range requests.
+- Run Android CI with an explicit Pixel 2 AVD, service-readiness checks and software translation on runners without KVM.
 
 ## [0.2.0] - 2026-11-06
 
