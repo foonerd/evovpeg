@@ -3,3 +3,6 @@
 # release builds must pass network-smoke.sh in scratch, which has no shared
 # libraries, before artifacts can be uploaded. Custom NSS plugins are not bundled.
 warning: Using 'getaddrinfo' in statically linked applications requires at runtime the shared libraries from the glibc version used for linking
+# Android NDK r27c Clang cannot vectorize the generic byte-swap helper loop on armeabi-v7a;
+# the scalar path is retained unchanged. Measure decode throughput on Android ARMv7 before optimizing.
+warning: loop not vectorized: the optimizer was unable to perform the requested transformation

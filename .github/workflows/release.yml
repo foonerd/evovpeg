@@ -54,15 +54,124 @@ jobs:
         run: |
           out/x64/bin/evovpeg -nostdin -v error -i tests/clips/flash-h264.mp4 -an -sn -frames:v 1 -pix_fmt yuv420p -f rawvideo /tmp/peg-frame.yuv
           docker run --rm --network none -v "$PWD:/src:ro" -v /tmp/peg-frame.yuv:/frame:ro node:20-bookworm-slim node /src/tests/measure-encode.cjs /src/out/x64/bin/evovpeg /frame
+      - name: Linux x64 frame reference
+        if: matrix.target == 'x64'
+        run: |
+          mkdir -p reference-x64
+          out/x64/bin/evovpeg -nostdin -v error -threads 1 -i tests/clips/flash-h264.mp4 -frames:v 60 -an -sn -pix_fmt yuv420p -f rawvideo - > reference-x64/flash-h264.yuv
+      - uses: actions/upload-artifact@v7
+        if: matrix.target == 'x64'
+        with:
+          name: evovpeg-reference-x64
+          path: reference-x64/flash-h264.yuv
+          if-no-files-found: error
       - uses: actions/upload-artifact@v7
         with:
           name: evovpeg-${{ matrix.target }}
           path: out/${{ matrix.target }}
           if-no-files-found: error
 
+  cross:
+    name: windows-x64 cross-build
+    needs: check
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v7
+      - name: Log in to the registry
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+      - run: ./build.sh windows-x64
+      - uses: actions/upload-artifact@v7
+        with:
+          name: evovpeg-windows-x64
+          path: out/windows-x64
+          if-no-files-found: error
+
+  android:
+    name: ${{ matrix.target }}
+    needs: cross
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [android-armeabi-v7a, android-arm64-v8a, android-x86_64]
+    steps:
+      - uses: actions/checkout@v7
+      - name: Log in to the registry
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+      - run: ./build.sh ${{ matrix.target }}
+      - uses: actions/upload-artifact@v7
+        with:
+          name: evovpeg-${{ matrix.target }}
+          path: out/${{ matrix.target }}
+          if-no-files-found: error
+
+  windows-smoke:
+    name: Windows native smoke
+    needs: [build, cross]
+    runs-on: windows-2025
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 20
+      - uses: actions/download-artifact@v8
+        with:
+          name: evovpeg-windows-x64
+          path: out/windows-x64
+      - uses: actions/download-artifact@v8
+        with:
+          name: evovpeg-reference-x64
+          path: reference-x64
+      - name: Verify the native Windows build
+        shell: bash
+        run: |
+          chmod 755 out/windows-x64/bin/evovpeg.exe out/windows-x64/bin/evovprobe.exe
+          bash scripts/verify-set.sh out/windows-x64/bin/evovpeg.exe . out/windows-x64/bin/evovprobe.exe windows-x64
+          bash scripts/smoke.sh out/windows-x64/bin/evovpeg.exe out/windows-x64/bin/evovprobe.exe tests/clips tests/clips/vvc-synthetic.266 /tmp/windows-smoke windows-x64
+          node tests/smoke-windows.cjs out/windows-x64/bin/evovpeg.exe out/windows-x64/bin/evovprobe.exe tests/clips/flash-h264.mp4 reference-x64/flash-h264.yuv
+
+  android-smoke:
+    name: Android x86_64 emulator smoke
+    needs: [build, android]
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/download-artifact@v8
+        with:
+          name: evovpeg-android-x86_64
+          path: out/android-x86_64
+      - uses: actions/download-artifact@v8
+        with:
+          name: evovpeg-reference-x64
+          path: reference-x64
+      - name: Boot the Android x86_64 runtime and verify decode parity
+        run: |
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses >/dev/null
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platform-tools" "platforms;android-35" "emulator" "system-images;android-35;google_apis;x86_64" >/dev/null
+          echo no | "$ANDROID_HOME/cmdline-tools/latest/bin/avdmanager" create avd --name evovpeg --package "system-images;android-35;google_apis;x86_64" --force
+          "$ANDROID_HOME/emulator/emulator" -avd evovpeg -no-window -no-audio -no-boot-anim -no-snapshot -accel auto > /tmp/evovpeg-emulator.log 2>&1 &
+          emulator_pid=$!
+          trap 'kill "$emulator_pid" 2>/dev/null || true' EXIT
+          timeout 120 adb wait-for-device
+          booted=
+          attempt=0
+          while [[ "$booted" != 1 && "$attempt" -lt 120 ]]; do
+            booted=$(adb shell getprop sys.boot_completed | tr -d '\r')
+            attempt=$((attempt + 1))
+            [[ "$booted" == 1 ]] || sleep 2
+          done
+          [[ "$booted" == 1 ]]
+          bash scripts/smoke-android.sh android-x86_64 out/android-x86_64/bin tests/clips/flash-h264.mp4 reference-x64/flash-h264.yuv
+
   publish:
     name: pack, sign, publish
-    needs: build
+    needs: [build, cross, android, windows-smoke, android-smoke]
     runs-on: ubuntu-24.04
     permissions:
       contents: write
@@ -75,7 +184,7 @@ jobs:
       - name: What the builds made, where package.sh looks for it
         run: |
           mkdir -p out
-          for t in armv7 armv8 x64; do mv "artifacts/evovpeg-$t" "out/$t"; done
+          for t in armv7 armv8 x64 windows-x64 android-armeabi-v7a android-arm64-v8a android-x86_64; do mv "artifacts/evovpeg-$t" "out/$t"; done
           ls -la out/*/bin
       # The x64 build runs here: proven once more after its trip through the artifact store.
       - name: The x64 binary, as it arrived
@@ -118,4 +227,4 @@ jobs:
           version="${GITHUB_REF_NAME#v}"
           { scripts/release-notes.sh "$version"; printf '\n'; cat .github/release-footer.md; } > dist/notes.md
           gh release create "$GITHUB_REF_NAME" --title "evovpeg $version" --notes-file dist/notes.md --prerelease \
-            dist/evovpeg-*.tar.gz dist/evovpeg-sources-*.tar.xz dist/manifest.json dist/SHA256SUMS dist/SHA256SUMS.sig
+            dist/evovpeg-*.tar.gz dist/evovpeg-*.zip dist/evovpeg-sources-*.tar.xz dist/manifest.json dist/SHA256SUMS dist/SHA256SUMS.sig

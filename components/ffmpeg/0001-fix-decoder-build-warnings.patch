@@ -257,3 +257,23 @@
 @@ -1252,1 +1264,2 @@
  IMAGEAUTO_DEMUXER(xwd,       XWD)
 +#endif
+--- a/libavcodec/vp8dsp.c
++++ b/libavcodec/vp8dsp.c
+@@ -299,2 +299,3 @@
++#if CONFIG_VP7_DECODER
+ static av_always_inline void vp7_filter_common(uint8_t *p, ptrdiff_t stride,
+                                                int is4tap)
+@@ -303,1 +304,2 @@
+ }
++#endif
+@@ -311,2 +313,3 @@
++#if CONFIG_VP7_DECODER
+ static av_always_inline int vp7_simple_limit(uint8_t *p, ptrdiff_t stride,
+                                              int flim)
+@@ -316,1 +319,2 @@
+ }
++#endif
+@@ -341,1 +345,3 @@
++#if CONFIG_VP7_DECODER
+ NORMAL_LIMIT(7)
++#endif

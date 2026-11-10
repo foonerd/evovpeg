@@ -1,6 +1,6 @@
 #!/bin/bash
-# Gate: every ELF file under a directory is built for the target it is shipped as, with
-# no interpreter or dynamic section.
+# Gate: binaries under a directory match their target format and carry no bundled runtime
+# dependencies. Linux is fully static; Android may use only the platform runtime.
 #
 #   check-elf.sh <target> <directory>
 #
@@ -14,6 +14,32 @@ dir="$2"
 rule="$(target_elf_rule "$target")"
 fail=0
 count=0
+
+if [[ "$target" == windows-x64 ]]; then
+  for f in "$dir/evovpeg.exe" "$dir/evovprobe.exe"; do
+    [[ -f "$f" ]] || { echo "error: missing $f" >&2; exit 1; }
+    desc=$(file -b "$f")
+    imports=$(x86_64-w64-mingw32-objdump -p "$f" | sed -n 's/^[[:space:]]*DLL Name: //p' | tr '[:upper:]' '[:lower:]')
+    ok=1
+    case "$desc" in *"PE32+"*"x86-64"*) ;; *) ok=0 ;; esac
+    while IFS= read -r dll; do
+      case "$dll" in
+        kernel32.dll|ntdll.dll|msvcrt.dll|ucrtbase.dll|ws2_32.dll|advapi32.dll|user32.dll|shell32.dll|ole32.dll|oleaut32.dll|bcrypt.dll|crypt32.dll|secur32.dll|gdi32.dll|winmm.dll|combase.dll|rpcrt4.dll|shlwapi.dll|api-ms-win-*.dll|ext-ms-win-*.dll) ;;
+        *) echo "  WRONG $(basename "$f"): non-system DLL import $dll"; ok=0 ;;
+      esac
+    done <<< "$imports"
+    if [[ "$ok" -eq 1 ]]; then
+      echo "  ok    $(basename "$f") (PE32+, Windows system DLLs only)"
+      count=$((count + 1))
+    else
+      echo "  WRONG $(basename "$f") ($desc)"
+      fail=1
+    fi
+  done
+  [[ "$fail" -eq 0 ]] || exit 1
+  echo "[OK] $count Windows executable(s) match target '$target'"
+  exit 0
+fi
 
 while IFS= read -r -d '' f; do
   desc="$(file -b "$f")"
@@ -37,9 +63,20 @@ while IFS= read -r -d '' f; do
       detail="x86-64"
       ;;
   esac
-  case "$desc" in *"statically linked"*) detail="$detail, static" ;; *) ok=0; detail="$detail, NOT static" ;; esac
-  if readelf -l "$f" | grep -q 'INTERP'; then ok=0; detail="$detail, interpreter present"; fi
-  if readelf -d "$f" 2>/dev/null | grep -q '(NEEDED)'; then ok=0; detail="$detail, dynamic dependency present"; fi
+  if [[ "$target" == android-* ]]; then
+    interp=$(readelf -l "$f" | sed -n 's/.*Requesting program interpreter: \([^]]*\).*/\1/p')
+    case "$interp" in /system/bin/linker|/system/bin/linker64) ;; *) ok=0 ;; esac
+    while IFS= read -r library; do
+      case "$library" in libc.so|libm.so|libdl.so|liblog.so|libandroid.so|libz.so) ;;
+        *) echo "  WRONG $rel (non-system dependency $library)"; ok=0 ;;
+      esac
+    done < <(readelf -d "$f" 2>/dev/null | sed -n 's/.*Shared library: \[\([^]]*\)\].*/\1/p')
+    detail="$detail, Android runtime"
+  else
+    case "$desc" in *"statically linked"*) detail="$detail, static" ;; *) ok=0; detail="$detail, NOT static" ;; esac
+    if readelf -l "$f" | grep -q 'INTERP'; then ok=0; detail="$detail, interpreter present"; fi
+    if readelf -d "$f" 2>/dev/null | grep -q '(NEEDED)'; then ok=0; detail="$detail, dynamic dependency present"; fi
+  fi
   if [[ "$ok" -eq 1 ]]; then
     echo "  ok    $rel ($detail)"
   else
@@ -56,4 +93,8 @@ if [[ "$fail" -ne 0 ]]; then
   echo "error: binaries not built for target '$target' ($rule), or not static" >&2
   exit 1
 fi
-echo "[OK] $count ELF file(s) match target '$target' ($rule), static"
+if [[ "$target" == android-* ]]; then
+  echo "[OK] $count ELF file(s) match target '$target' ($rule), platform dependencies only"
+else
+  echo "[OK] $count ELF file(s) match target '$target' ($rule), static"
+fi

@@ -25,20 +25,22 @@ done
 
 for t in "${targets[@]}"; do
   platform="$(target_platform "$t")"
+  builder_target="$t"
+  case "$t" in windows-x64|android-*) builder_target=cross ;; esac
   echo ""
   echo "########## $t ($platform)"
-  builder="evovpeg/build:$t"
+  builder="evovpeg/build:$builder_target"
   kept=""
   if [[ -n "${BUILDER_REGISTRY:-}" ]]; then
-    kept="$BUILDER_REGISTRY:$t-$(scripts/builder-key.sh)"
+    kept="$BUILDER_REGISTRY:$builder_target-$(scripts/builder-key.sh)"
   fi
   if [[ -n "$kept" ]] && docker pull -q --platform "$platform" "$kept" > /dev/null 2>&1; then
     echo "[OK] build image: $kept"
     docker tag "$kept" "$builder"
   else
     scripts/fetch-sources.sh
-    docker build --platform "$platform" -f docker/Dockerfile.build -t "evovpeg/tools:$t" docker
-    printf 'FROM evovpeg/tools:%s\nCOPY . /opt/src/\n' "$t" \
+    docker build --platform "$platform" -f docker/Dockerfile.build -t "evovpeg/tools:$builder_target" docker
+    printf 'FROM evovpeg/tools:%s\nCOPY . /opt/src/\n' "$builder_target" \
       | docker build --platform "$platform" -t "$builder" -f - .cache/src
     if [[ -n "$kept" && "${BUILDER_PUSH:-0}" == 1 ]]; then
       docker tag "$builder" "$kept"
@@ -57,7 +59,8 @@ for t in "${targets[@]}"; do
     -e TARGET="$t" -e HOST_UID="$(id -u)" -e HOST_GID="$(id -g)" \
     "$builder" "${personality[@]}" bash /src/scripts/build-target.sh 2>&1 | tee "out/$t/build.log"
   # The pipe hides the container's exit; the build's last line says it ended well.
-  grep -q "^\[OK\] $t built:" "out/$t/build.log" || { echo "error: the $t build did not end well; out/$t/build.log says why" >&2; exit 1; }
+  grep -Eq "^\[OK\] $t (built:|cross-build complete;)" "out/$t/build.log" \
+    || { echo "error: the $t build did not end well; out/$t/build.log says why" >&2; exit 1; }
   # No warning passes unread: each one is on the reviewed list, or the build fails.
   scripts/check-warnings.sh "out/$t/build.log"
   scripts/write-manifest.sh "$t"

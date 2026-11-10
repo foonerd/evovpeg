@@ -88,7 +88,7 @@ echo "  ok    vvc: probed $vvc_width x $vvc_height and decoded a frame"
 m2m_count=$("$bin" -hide_banner -decoders | grep -c 'v4l2m2m' || true)
 case "$target" in
   armv7|armv8) expected_m2m=6 ;;
-  x64) expected_m2m=0 ;;
+  x64|windows-x64|android-*) expected_m2m=0 ;;
   *) echo "error: unknown target '$target'" >&2; exit 2 ;;
 esac
 [[ "$m2m_count" -eq "$expected_m2m" ]] \

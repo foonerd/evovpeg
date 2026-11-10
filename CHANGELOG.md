@@ -2,6 +2,20 @@
 
 All notable changes to evovpeg. Versions follow Semantic Versioning and move when the source or build recipe changes.
 
+## [0.3.2] - 2026-11-10
+
+### Added
+
+- Windows x64 `evovpeg.exe` and `evovprobe.exe`, built with MinGW-w64 and checked for Windows-system-only DLL imports.
+- Android NDK builds for Glass's `armeabi-v7a`, `arm64-v8a` and `x86_64` ABIs, using API 24 and the platform C runtime.
+- Signed-release ZIP packaging for Windows and Android, with per-architecture decoder/prober paths and SHA-256 digests in `manifest.json`.
+- Native Windows codec, HTTP range, TLS verification and Linux frame-parity checks, plus Android x86_64 emulator probe/decode parity checks.
+
+### Changed
+
+- Cross-target dependency builds now use the pinned MinGW and Android NDK toolchains; Linux target outputs remain unchanged in format.
+- All platform binaries are represented in one release manifest; Windows/Android archives use ZIP and Linux archives remain tar.gz.
+
 ## [0.3.1] - 2026-11-07
 
 ### Fixed

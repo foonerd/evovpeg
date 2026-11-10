@@ -9,7 +9,8 @@ root=$(cd "$(dirname "$0")/.." && pwd)
 . "$root/scripts/targets.sh"
 target=$1
 out="$root/out/$target"
-[ -x "$out/bin/evovpeg" ] || { echo "error: $out/bin/evovpeg is missing" >&2; exit 1; }
+suffix=$(target_binary_suffix "$target")
+[ -x "$out/bin/evovpeg$suffix" ] || { echo "error: $out/bin/evovpeg$suffix is missing" >&2; exit 1; }
 
 json_string() { printf '"%s"' "$(printf '%s' "$1" | sed 's/["\\]/\\&/g')"; }
 

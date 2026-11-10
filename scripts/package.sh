@@ -20,7 +20,8 @@ done
 version=$(cat VERSION)
 
 for t in $TARGETS; do
-  for f in bin/evovpeg bin/evovprobe licenses/NOTICE build.json; do
+  suffix=$(target_binary_suffix "$t")
+  for f in "bin/evovpeg$suffix" "bin/evovprobe$suffix" licenses/NOTICE build.json; do
     [[ -f "$from/$t/$f" ]] || { echo "error: $from/$t/$f is missing; build target '$t' first" >&2; exit 1; }
   done
   # Each file as build.json has it.
@@ -37,14 +38,25 @@ rm -rf dist && mkdir -p dist
 for arch in $ARCHIVES; do
   t=$(archive_source "$arch")
   top="evovpeg-$version-$arch"
+  suffix=$(target_binary_suffix "$t")
   rm -rf "dist/$top" && mkdir -p "dist/$top/bin" "dist/$top/licenses"
-  install -m 755 "$from/$t/bin/evovpeg" "dist/$top/bin/evovpeg"
-  install -m 755 "$from/$t/bin/evovprobe" "dist/$top/bin/evovprobe"
+  install -m 755 "$from/$t/bin/evovpeg$suffix" "dist/$top/bin/evovpeg$suffix"
+  install -m 755 "$from/$t/bin/evovprobe$suffix" "dist/$top/bin/evovprobe$suffix"
   install -m 644 "$from/$t"/licenses/* "dist/$top/licenses/"
   install -m 644 "$from/$t/build.json" README.md LICENSE "dist/$top/"
-  tar -C dist --sort=name --owner=0 --group=0 --numeric-owner --mtime='@0' -czf "dist/$top.tar.gz" "$top"
+  case "$arch" in
+    windows-x64|android-*)
+      find "dist/$top" -exec touch -h -d '@315532800' {} +
+      (cd dist && find "$top" -type f -print | LC_ALL=C sort | zip -X -q "$top.zip" -@)
+      ;;
+    *)
+      tar -C dist --sort=name --owner=0 --group=0 --numeric-owner --mtime='@0' -czf "dist/$top.tar.gz" "$top"
+      ;;
+  esac
   rm -rf "dist/$top"
-  echo "[OK] dist/$top.tar.gz: $(stat -c %s "dist/$top.tar.gz") bytes (from $t)"
+  archive="$top.tar.gz"
+  case "$arch" in windows-x64|android-*) archive="$top.zip" ;; esac
+  echo "[OK] dist/$archive: $(stat -c %s "dist/$archive") bytes (from $t)"
 done
 
 {
@@ -56,7 +68,26 @@ done
   for arch in $ARCHIVES; do
     [ "$first" -eq 1 ] || echo ","
     first=0
-    printf '    "%s": "%s"' "$arch" "evovpeg-$version-$arch.tar.gz"
+    suffix=".tar.gz"
+    case "$arch" in windows-x64|android-*) suffix=".zip" ;; esac
+    printf '    "%s": "%s"' "$arch" "evovpeg-$version-$arch$suffix"
+  done
+  echo
+  echo "  },"
+  echo '  "binaries": {'
+  first=1
+  for arch in $ARCHIVES; do
+    t=$(archive_source "$arch")
+    suffix=$(target_binary_suffix "$t")
+    decoder="bin/evovpeg$suffix"
+    prober="bin/evovprobe$suffix"
+    decoder_sha=$(sed -n "s|^ *\"$decoder\": { \"sha256\": \"\([0-9a-f]*\)\".*|\1|p" "$from/$t/build.json")
+    prober_sha=$(sed -n "s|^ *\"$prober\": { \"sha256\": \"\([0-9a-f]*\)\".*|\1|p" "$from/$t/build.json")
+    [[ -n "$decoder_sha" && -n "$prober_sha" ]] || { echo "error: $t binary hashes are absent from build.json" >&2; exit 1; }
+    [ "$first" -eq 1 ] || echo ","
+    first=0
+    printf '    "%s": { "evovpeg": { "path": "%s", "sha256": "%s" }, "evovprobe": { "path": "%s", "sha256": "%s" } }' \
+      "$arch" "$decoder" "$decoder_sha" "$prober" "$prober_sha"
   done
   echo
   echo "  }"

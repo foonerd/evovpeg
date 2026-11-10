@@ -6,11 +6,28 @@
 FROM debian:bookworm-slim
 
 ENV DEBIAN_FRONTEND=noninteractive
+ARG CMDLINE_TOOLS=commandlinetools-linux-15859902_latest.zip
+ARG CMDLINE_TOOLS_SHA256=4e4c464f145a7512b57d088ac6c278c03c9eea610886b35a5e0804e74eedf583
+ENV ANDROID_HOME=/opt/android-sdk \
+    ANDROID_SDK_ROOT=/opt/android-sdk \
+    ANDROID_NDK_HOME=/opt/android-sdk/ndk/27.2.12479018
 
 # nasm assembles FFmpeg's x86 routines; the ARM ones are inline, so only amd64 takes it.
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends build-essential cmake file make meson ninja-build patch pkg-config xz-utils \
+    && apt-get install -y --no-install-recommends build-essential cmake curl file gcc-mingw-w64-x86-64 g++-mingw-w64-x86-64 make meson ninja-build openjdk-17-jre-headless patch pkg-config unzip xz-utils \
     && if [ "$(dpkg --print-architecture)" = amd64 ]; then apt-get install -y --no-install-recommends nasm; fi \
     && rm -rf /var/lib/apt/lists/*
+
+RUN if [ "$(dpkg --print-architecture)" = amd64 ]; then \
+    mkdir -p "$ANDROID_HOME/cmdline-tools" \
+    && curl -fsSL --retry 5 --retry-all-errors -o /tmp/tools.zip "https://dl.google.com/android/repository/$CMDLINE_TOOLS" \
+    && echo "$CMDLINE_TOOLS_SHA256  /tmp/tools.zip" | sha256sum -c - \
+    && unzip -q /tmp/tools.zip -d "$ANDROID_HOME/cmdline-tools" \
+    && mv "$ANDROID_HOME/cmdline-tools/cmdline-tools" "$ANDROID_HOME/cmdline-tools/latest" \
+    && rm /tmp/tools.zip \
+    && yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses >/dev/null \
+    && "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "ndk;27.2.12479018" \
+    && chmod -R a+rX "$ANDROID_HOME"; \
+    fi
 
 WORKDIR /work

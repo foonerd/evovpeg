@@ -57,3 +57,14 @@
 +#endif
 
 # End of patch.
+--- a/encoder/ratecontrol.c
++++ b/encoder/ratecontrol.c
+@@ -2883,1 +2882,0 @@
+-    int iterations = 0;
+@@ -2892,1 +2891,0 @@
+-        iterations++;
+--- a/encoder/cavlc.c
++++ b/encoder/cavlc.c
+@@ -151,1 +151,2 @@
+    bs_write( s, i_trailing, i_sign );
++    (void)i_sign;
