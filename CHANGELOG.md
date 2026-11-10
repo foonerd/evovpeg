@@ -2,6 +2,13 @@
 
 All notable changes to evovpeg. Versions follow Semantic Versioning and move when the source or build recipe changes.
 
+## [0.3.3] - 2026-11-10
+
+### Fixed
+
+- Normalize CRLF when comparing FFmpeg component lists so the Windows native verifier checks the same names as Unix builds.
+- Add Android platform-tools to the emulator job's PATH before invoking ADB.
+
 ## [0.3.2] - 2026-11-10
 
 ### Added

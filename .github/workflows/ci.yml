@@ -148,6 +148,7 @@ jobs:
           path: reference-x64
       - name: Boot the Android x86_64 runtime and verify decode parity
         run: |
+          export PATH="$ANDROID_HOME/platform-tools:$PATH"
           yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses >/dev/null
           "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platform-tools" "platforms;android-35" "emulator" "system-images;android-35;google_apis;x86_64" >/dev/null
           echo no | "$ANDROID_HOME/cmdline-tools/latest/bin/avdmanager" create avd --name evovpeg --package "system-images;android-35;google_apis;x86_64" --force

@@ -40,7 +40,7 @@ for list in encoders decoders muxers demuxers protocols filters bsfs hwaccels; d
     expected_file="$expected/decoders-arm.txt"
   fi
   [ -f "$expected_file" ] || { echo "verify-set: no $expected_file" >&2; exit 2; }
-  if diff -u "$expected_file" <(names "$list") > /tmp/verify-set.diff; then
+  if diff -u <(sed 's/\r$//' "$expected_file") <(names "$list" | sed 's/\r$//') > /tmp/verify-set.diff; then
     echo "  ok    $list: $(grep -c . "$expected_file") as expected"
   else
     echo "  WRONG $list: the binary differs from $expected_file (- expected, + the binary):"
