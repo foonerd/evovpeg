@@ -154,7 +154,8 @@ jobs:
           path: reference-x64
       - name: Boot the Android x86_64 runtime and verify decode parity
         env:
-          EVOVPEG_EMULATOR_ACCEL: auto
+          EVOVPEG_EMULATOR_ACCEL: off
+          ANDROID_I_WANT_MY_TCG: yes
         run: |
           export ANDROID_AVD_HOME="$HOME/.android/avd"
           mkdir -p "$ANDROID_AVD_HOME"

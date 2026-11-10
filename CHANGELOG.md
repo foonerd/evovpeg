@@ -2,6 +2,12 @@
 
 All notable changes to evovpeg. Versions follow Semantic Versioning and move when the source or build recipe changes.
 
+## [0.3.7] - 2026-11-10
+
+### Fixed
+
+- Run the Android x86_64 CI emulator with software translation and its required opt-in on GitHub-hosted runners that do not expose `/dev/kvm`.
+
 ## [0.3.6] - 2026-11-10
 
 ### Fixed
