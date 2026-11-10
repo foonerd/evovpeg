@@ -19,6 +19,7 @@ trap cleanup EXIT
 if [[ "$boot_mode" == --boot ]]; then
   avdmanager create avd --name evovpeg-smoke --device pixel_2 \
     --package 'system-images;android-35;google_apis;x86_64' --force
+  emulator -list-avds | grep -Fx evovpeg-smoke
   emulator -avd evovpeg-smoke -no-window -no-audio -no-boot-anim -no-snapshot \
     -accel "${EVOVPEG_EMULATOR_ACCEL:-off}" -no-metrics -verbose > "$work/emulator.log" 2>&1 &
   emulator_pid=$!

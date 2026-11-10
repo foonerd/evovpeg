@@ -2,6 +2,12 @@
 
 All notable changes to evovpeg. Versions follow Semantic Versioning and move when the source or build recipe changes.
 
+## [0.3.6] - 2026-11-10
+
+### Fixed
+
+- Set an explicit Android AVD home in CI and verify the Pixel 2 AVD is discoverable before starting the emulator.
+
 ## [0.3.5] - 2026-11-10
 
 ### Fixed
