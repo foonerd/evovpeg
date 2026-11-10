@@ -5,9 +5,9 @@ const os = require('node:os');
 const path = require('node:path');
 const { spawn, spawnSync } = require('node:child_process');
 
-const [decoder, prober, clip, reference] = process.argv.slice(2);
-if (![decoder, prober, clip, reference].every(Boolean)) {
-    throw new Error('usage: smoke-windows.cjs DECODER PROBER CLIP LINUX_REFERENCE');
+const [decoder, prober, clip, reference, rangeClip] = process.argv.slice(2);
+if (![decoder, prober, clip, reference, rangeClip].every(Boolean)) {
+    throw new Error('usage: smoke-windows.cjs DECODER PROBER CLIP LINUX_REFERENCE RANGE_CLIP');
 }
 
 const expectedMetadata = 'h264,320,180,30/1';
@@ -61,7 +61,7 @@ function serve(request, response) {
         response.writeHead(404).end();
         return;
     }
-    const size = fs.statSync(clip).size;
+    const size = fs.statSync(rangeClip).size;
     const range = request.headers.range;
     let start = 0;
     let end = size - 1;
@@ -78,7 +78,7 @@ function serve(request, response) {
     if (range) headers['Content-Range'] = `bytes ${start}-${end}/${size}`;
     response.writeHead(range ? 206 : 200, headers);
     if (request.method === 'HEAD') response.end();
-    else fs.createReadStream(clip, { start, end }).pipe(response);
+    else fs.createReadStream(rangeClip, { start, end }).pipe(response);
 }
 
 function listen(server) {

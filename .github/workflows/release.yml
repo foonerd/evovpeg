@@ -59,11 +59,13 @@ jobs:
         run: |
           mkdir -p reference-x64
           out/x64/bin/evovpeg -nostdin -v error -threads 1 -i tests/clips/flash-h264.mp4 -frames:v 60 -an -sn -pix_fmt yuv420p -f rawvideo - > reference-x64/flash-h264.yuv
+          out/x64/bin/evovpeg -nostdin -v error -stream_loop 29 -i tests/clips/flash-h264.mp4 -t 60 -an -c:v copy -f mp4 reference-x64/range.mp4
+          test "$(stat -c %s reference-x64/range.mp4)" -gt 32768
       - uses: actions/upload-artifact@v7
         if: matrix.target == 'x64'
         with:
           name: evovpeg-reference-x64
-          path: reference-x64/flash-h264.yuv
+          path: reference-x64/
           if-no-files-found: error
       - uses: actions/upload-artifact@v7
         with:
@@ -134,7 +136,7 @@ jobs:
           chmod 755 out/windows-x64/bin/evovpeg.exe out/windows-x64/bin/evovprobe.exe
           bash scripts/verify-set.sh out/windows-x64/bin/evovpeg.exe . out/windows-x64/bin/evovprobe.exe windows-x64
           bash scripts/smoke.sh out/windows-x64/bin/evovpeg.exe out/windows-x64/bin/evovprobe.exe tests/clips tests/clips/vvc-synthetic.266 /tmp/windows-smoke windows-x64
-          node tests/smoke-windows.cjs out/windows-x64/bin/evovpeg.exe out/windows-x64/bin/evovprobe.exe tests/clips/flash-h264.mp4 reference-x64/flash-h264.yuv
+          node tests/smoke-windows.cjs out/windows-x64/bin/evovpeg.exe out/windows-x64/bin/evovprobe.exe tests/clips/flash-h264.mp4 reference-x64/flash-h264.yuv reference-x64/range.mp4
 
   android-smoke:
     name: Android x86_64 emulator smoke

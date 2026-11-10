@@ -2,12 +2,19 @@
 
 All notable changes to evovpeg. Versions follow Semantic Versioning and move when the source or build recipe changes.
 
+## [0.3.4] - 2026-11-10
+
+### Fixed
+
+- Use a longer, tail-indexed MP4 in the Windows HTTP smoke so the server must satisfy an actual Range request.
+
 ## [0.3.3] - 2026-11-10
 
 ### Fixed
 
 - Normalize CRLF when comparing FFmpeg component lists so the Windows native verifier checks the same names as Unix builds.
 - Add Android platform-tools to the emulator job's PATH before invoking ADB.
+- Use a longer MP4 with a tail index in Windows HTTP smoke tests so range seeking is exercised instead of fitting in the initial read buffer.
 
 ## [0.3.2] - 2026-11-10
 
