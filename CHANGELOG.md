@@ -29,6 +29,7 @@ All notable changes to evovpeg. Versions follow Semantic Versioning and move whe
 - Keep parallel FFmpeg build diagnostics grouped so the warning gate receives intact output.
 - Normalize CRLF when comparing FFmpeg component lists, and use a tail-indexed MP4 to ensure Windows HTTP smoke exercises Range requests.
 - Run Android CI with an explicit Pixel 2 AVD, service-readiness checks and software translation on runners without KVM.
+- Fetch zlib 1.4 from its official fossil archive using the published checksum; its source tree matches the original pinned archive.
 
 ## [0.2.0] - 2026-11-06
 
