@@ -153,24 +153,13 @@ jobs:
           name: evovpeg-reference-x64
           path: reference-x64
       - name: Boot the Android x86_64 runtime and verify decode parity
+        env:
+          EVOVPEG_EMULATOR_ACCEL: auto
         run: |
-          export PATH="$ANDROID_HOME/platform-tools:$PATH"
+          export PATH="$ANDROID_HOME/emulator:$ANDROID_HOME/platform-tools:$ANDROID_HOME/cmdline-tools/latest/bin:$PATH"
           yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses >/dev/null
           "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platform-tools" "platforms;android-35" "emulator" "system-images;android-35;google_apis;x86_64" >/dev/null
-          echo no | "$ANDROID_HOME/cmdline-tools/latest/bin/avdmanager" create avd --name evovpeg --package "system-images;android-35;google_apis;x86_64" --force
-          "$ANDROID_HOME/emulator/emulator" -avd evovpeg -no-window -no-audio -no-boot-anim -no-snapshot -accel auto > /tmp/evovpeg-emulator.log 2>&1 &
-          emulator_pid=$!
-          trap 'kill "$emulator_pid" 2>/dev/null || true' EXIT
-          timeout 120 adb wait-for-device
-          booted=
-          attempt=0
-          while [[ "$booted" != 1 && "$attempt" -lt 120 ]]; do
-            booted=$(adb shell getprop sys.boot_completed | tr -d '\r')
-            attempt=$((attempt + 1))
-            [[ "$booted" == 1 ]] || sleep 2
-          done
-          [[ "$booted" == 1 ]]
-          bash scripts/smoke-android.sh android-x86_64 out/android-x86_64/bin tests/clips/flash-h264.mp4 reference-x64/flash-h264.yuv
+          bash scripts/smoke-android.sh android-x86_64 out/android-x86_64/bin tests/clips/flash-h264.mp4 reference-x64/flash-h264.yuv --boot
 
   publish:
     name: pack, sign, publish

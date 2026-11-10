@@ -20,9 +20,9 @@ if [[ "$boot_mode" == --boot ]]; then
   printf 'no\n' | avdmanager create avd --name evovpeg-smoke \
     --package 'system-images;android-35;google_apis;x86_64' --force
   emulator -avd evovpeg-smoke -no-window -no-audio -no-boot-anim -no-snapshot \
-    -accel off -no-metrics > "$work/emulator.log" 2>&1 &
+    -accel "${EVOVPEG_EMULATOR_ACCEL:-off}" -no-metrics > "$work/emulator.log" 2>&1 &
   emulator_pid=$!
-  adb wait-for-device
+  timeout 120 adb wait-for-device
   zygote=
   surfaceflinger=
   attempt=0

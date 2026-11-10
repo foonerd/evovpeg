@@ -7,6 +7,7 @@ All notable changes to evovpeg. Versions follow Semantic Versioning and move whe
 ### Fixed
 
 - Use a longer, tail-indexed MP4 in the Windows HTTP smoke so the server must satisfy an actual Range request.
+- Use zygote and surfaceflinger readiness for Android 15 emulator startup instead of relying on `sys.boot_completed`.
 
 ## [0.3.3] - 2026-11-10
 
