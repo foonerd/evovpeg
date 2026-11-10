@@ -17,12 +17,15 @@ trap cleanup EXIT
 
 [[ "$target" == android-x86_64 ]] || { echo "error: no emulator runtime recipe for $target" >&2; exit 2; }
 if [[ "$boot_mode" == --boot ]]; then
-  printf 'no\n' | avdmanager create avd --name evovpeg-smoke \
+  avdmanager create avd --name evovpeg-smoke --device pixel_2 \
     --package 'system-images;android-35;google_apis;x86_64' --force
   emulator -avd evovpeg-smoke -no-window -no-audio -no-boot-anim -no-snapshot \
-    -accel "${EVOVPEG_EMULATOR_ACCEL:-off}" -no-metrics > "$work/emulator.log" 2>&1 &
+    -accel "${EVOVPEG_EMULATOR_ACCEL:-off}" -no-metrics -verbose > "$work/emulator.log" 2>&1 &
   emulator_pid=$!
-  timeout 120 adb wait-for-device
+  if ! timeout 120 adb wait-for-device; then
+    cat "$work/emulator.log" >&2
+    exit 1
+  fi
   zygote=
   surfaceflinger=
   attempt=0

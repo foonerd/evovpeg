@@ -2,6 +2,12 @@
 
 All notable changes to evovpeg. Versions follow Semantic Versioning and move when the source or build recipe changes.
 
+## [0.3.5] - 2026-11-10
+
+### Fixed
+
+- Select a standard Pixel 2 AVD explicitly and include emulator diagnostics if Android ADB startup times out.
+
 ## [0.3.4] - 2026-11-10
 
 ### Fixed
